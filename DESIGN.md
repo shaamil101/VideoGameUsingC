@@ -174,16 +174,7 @@ The server will run as follows:
 
 ## Maps & Visibility
 Maps will be a separate module that the server will access for its map data structure and methods.
-Quote on valid maps from requirements spec:
 
-
-There will be a main data structure in the maps module will be the map_t struct. This structure should hold the array of arrays of chars for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
-   * ` ` solid rock - interstitial space outside rooms
-   * `-` a horizontal boundary
-   * `|` a vertical boundary
-   * `+` a corner boundary
-   * `.` an empty room spot
-   * `#` an empty passage spot
 
 
 The map structure will store the map as read from the map.txt file (there will be a method to load a map.txt file into a map), but it will not store the player or gold data (the server needs to do that). Instead, it will provide methods that take in the map struct pointer, a list of players, and a list of gold, and will return the ascii representation of the map with players and gold on it.
@@ -197,17 +188,65 @@ The server should store what gridpoints have been viewed by the player, and the 
 
 ### Functional decomposition
 
-> List each of the main functions implemented by this module, with a phrase or sentence description of each.
+ 1. *maps_read*, reads a map.txt file and loads it into a grid struct
+ 2. *maps_blankgrid*, converts the grid struct into a text representation of the map, without players or gold overlaid
+ 3. *maps_fullgrid*, converts the grid struct into a text representation of the map with all the players and gold overlaid
+ 4. *maps_playergrid*, converts the grid struct into a text representation of the map with only what a given player has seen, and only visible gold
+ 5. *maps_getDims*, returns the dimensions of the grid
+ 6. *maps_getVisiblePoints*, returns a list of points visible from a certain point
+
 
 ### Pseudo code for logic/algorithmic flow
 
-> For any non-trivial function, add a level-4 #### header and provide tab-indented pseudocode.
-> This pseudocode should be independent of the programming language.
+#### maps_read
+
+		open and validate the given maps.txt file
+		go through text file and get dimensions of map
+		initialize grid struct
+		declare arrays of integers for grid struct
+		go through text file and load characters into the grid struct
+
+#### maps_blankgrid
+
+		go through grid struct and return each character row separated by new lines
+
+#### maps_fullgrid
+
+	go through each grid struct with an empty string
+		if the (x,y) is a player, add the player letter (A-Z) instead of room space to the string
+		if the (x,y) is gold, add * instead of room space to the string
+		otherwise spit out the char in the grid, rows separated by new line
+
+#### maps_playergrid
+
+	go through each grid struct with an empty string
+		if the (x,y) is 
+		if the (x,y) is a player, add the player letter (A-Z) instead of room space to the string
+		if the (x,y) is gold, add * instead of room space to the string
+		otherwise spit out the char in the grid, rows separated by new line
+
+#### maps_getDims
+
+	return number of rows and number of columns of grid
+
+#### maps_getVisiblePoints
+
+	go through each gridpoint in the grid
+		if visible from a given player position
+			add to list of visible points
+	return list of visible points
 
 ### Major data structures
 
-> Describe each major data structure in this module: what information does it represent, how does it represent the data, and what are its members.
-> This description should be independent of the programming language.
+There will be a main data structure in the maps/visibility module will be the grid_t struct. This structure should hold the array of arrays of chars for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
+   * ` ` solid rock - interstitial space outside rooms
+   * `-` a horizontal boundary
+   * `|` a vertical boundary
+   * `+` a corner boundary
+   * `.` an empty room spot
+   * `#` an empty passage spot
+
+The grid_t* structure will also hold the integer number of rows and the number of columns for easy iteration boundaries.
 
 ---
 
