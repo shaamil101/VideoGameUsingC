@@ -1,18 +1,14 @@
 # CS50 Nuggets
 ## Design Spec
-### Team name, term, year
-
-> This **template** includes some gray text meant to explain how to use the template; delete all of them in your document!
+### Wall Street Djournal - CS50 23W
 
 According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
-Our design also includes x, y, z modules.
+Our design also includes player and maps/visibility modules.
 We describe each program and module separately.
 We do not describe the `support` library nor the modules that enable features that go beyond the spec.
 We avoid repeating information that is provided in the requirements spec.
 
-## Player
-
-> Teams of 3 students should delete this section.
+## Client (Player / Spectator)
 
 The *client* acts in one of two modes:
 
@@ -176,7 +172,46 @@ The server will run as follows:
 
 ---
 
-## XYZ module
+## Maps & Visibility
+Maps will be a separate module that the server will access for its map data structure and methods.
+Quote on valid maps from requirements spec:
+
+
+There will be a main data structure in the maps module will be the map_t struct. This structure should hold the array of arrays of chars for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
+   * ` ` solid rock - interstitial space outside rooms
+   * `-` a horizontal boundary
+   * `|` a vertical boundary
+   * `+` a corner boundary
+   * `.` an empty room spot
+   * `#` an empty passage spot
+
+
+The map structure will store the map as read from the map.txt file (there will be a method to load a map.txt file into a map), but it will not store the player or gold data (the server needs to do that). Instead, it will provide methods that take in the map struct pointer, a list of players, and a list of gold, and will return the ascii representation of the map with players and gold on it.
+
+We'll design a number of methods to allow loading and setting the map, printing out the blank map, the map with players overlaid, and the map with gold overlaid, and the map with only some sections visible (for players not being able to see the whole map)
+
+Visibility will work within the maps module. Given a player's position, we want to know if a certain gridpoint is visible. We'll use the method described in the requirements spec, where we look through the rows and columns between the player position (pr, pc) and the gridpoint we're trying to look at (r,c). If the line between these two points is ever between two NOT empty room spots, then the point will not be visible.
+
+The server should store what gridpoints have been viewed by the player, and the maps module will have an isVisible() method that, for player position and gridpoint position, will return a bool value for if its visible. We can then iterate through the map and display only what's visible on the grid, and what has been previously seen.
+
+
+### Functional decomposition
+
+> List each of the main functions implemented by this module, with a phrase or sentence description of each.
+
+### Pseudo code for logic/algorithmic flow
+
+> For any non-trivial function, add a level-4 #### header and provide tab-indented pseudocode.
+> This pseudocode should be independent of the programming language.
+
+### Major data structures
+
+> Describe each major data structure in this module: what information does it represent, how does it represent the data, and what are its members.
+> This description should be independent of the programming language.
+
+---
+
+## Player Module
 
 > Repeat this section for each module that is included in either the client or server.
 
