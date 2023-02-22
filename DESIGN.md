@@ -62,7 +62,6 @@ There is no interaction with the user.
 ./server map.txt [seed]
 ```
 To start the server, one must include one argument `map.txt`, and optional argument `seed`.
-
 The `seed` argument creates a constant set of variables for the characterisitcs of the map such as location of players and location of gold.
 
 ### Functional decomposition into modules
