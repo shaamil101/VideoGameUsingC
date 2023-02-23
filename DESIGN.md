@@ -192,6 +192,7 @@ The server should store what gridpoints have been viewed by the player, and the 
  4. *maps_playergrid*, converts the grid struct into a text representation of the map with only what a given player has seen, and only visible gold
  5. *maps_getDims*, returns the dimensions of the grid
  6. *maps_getVisiblePoints*, returns a list of points visible from a certain point
+ 7. *maps_getRandomGridpoint*, returns a random, valid (empty room) gridpoint
 
 
 ### Pseudo code for logic/algorithmic flow
@@ -234,6 +235,12 @@ The server should store what gridpoints have been viewed by the player, and the 
 		if gridpoint is visible from player pos (if line is not between two empty room spots for each pair of gridpoints between the line through each row/column (or gridpoint if line lies directly on one))
 			add to list of visible points
 	return list of visible points
+
+#### maps_getRandomGridpoint
+
+	get positions of all empty room gridpoints
+	pick a random one from that list
+	return that one
 
 ### Major data structures
 
