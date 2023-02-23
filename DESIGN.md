@@ -81,6 +81,17 @@ The *client* acts in one of two modes:
 
 No major data structures are needed for the client.
 
+### Testing plan
+
+We'll test various aspects of our client, including
+
+1. arguments - ensure arguments are good to start client correctly
+1. connection to server - handing bad addresses, bad ports, disconnection
+1. window sizing - what happens when window is sized incorrectly or user never resizes
+1. input handling - handling any button presses at any time
+1. bad server messages - what happens when we receive bad data from the server
+1. memory leaks - check for memory leaks while the program is running (exception being from ncurses library)
+
 ---
 
 ## Server
@@ -204,6 +215,15 @@ The server will run as follows:
         * int goldCollected: number of gold collected in the game
         * int goldPileCount[x][y] = number of gold at that location
 		* Spectator : New type to store spectator details
+
+### Testing plan
+
+We'll test our server program's various aspects, including:
+
+1. bad arguments - make sure server start's running okay with correct arguments
+1. connection to client - if multiple clients try to connect, multiple spectators, a client disconnects partway through the game
+1. bad messages from client - handling all messages that the client could pass
+1. memory leaks - check for memory leaks while the program is running
 
 ---
 
