@@ -175,15 +175,13 @@ The server will run as follows:
 ## Maps & Visibility
 Maps will be a separate module that the server will access for its map data structure and methods.
 
-
-
 The map structure will store the map as read from the map.txt file (there will be a method to load a map.txt file into a map), but it will not store the player or gold data (the server needs to do that). Instead, it will provide methods that take in the map struct pointer, a list of players, and a list of gold, and will return the ascii representation of the map with players and gold on it.
 
 We'll design a number of methods to allow loading and setting the map, printing out the blank map, the map with players overlaid, and the map with gold overlaid, and the map with only some sections visible (for players not being able to see the whole map)
 
 Visibility will work within the maps module. Given a player's position, we want to know if a certain gridpoint is visible. We'll use the method described in the requirements spec, where we look through the rows and columns between the player position (pr, pc) and the gridpoint we're trying to look at (r,c). If the line between these two points is ever between two NOT empty room spots, then the point will not be visible.
 
-The server should store what gridpoints have been viewed by the player, and the maps module will have an isVisible() method that, for player position and gridpoint position, will return a bool value for if its visible. We can then iterate through the map and display only what's visible on the grid, and what has been previously seen.
+The server should store what gridpoints have been viewed by the player, and the maps module should have an isVisible() method that, for player position and gridpoint position, will return a bool value for if its visible. We can then iterate through the map and display only what's visible on the grid, and what has been previously seen.
 
 
 ### Functional decomposition
@@ -231,8 +229,9 @@ The server should store what gridpoints have been viewed by the player, and the 
 
 #### maps_getVisiblePoints
 
-	go through each gridpoint in the grid
-		if visible from a given player position
+	go through each gridpoint in the grid (knowing the player position we're trying to look from)
+		think of line between player position and test position
+		if gridpoint is visible from player pos (if line is not between two empty room spots for each pair of gridpoints between the line through each row/column (or gridpoint if line lies directly on one))
 			add to list of visible points
 	return list of visible points
 
