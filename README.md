@@ -1,5 +1,9 @@
 # Nuggets
 
+Wall Street Djournal - CS50 23W
+## submit-design branch
+### submission for design spec DESIGN.md
+
 This repository contains the code for the CS50 "Nuggets" game, in which players explore a set of rooms and passageways in search of gold nuggets.
 The rooms and passages are defined by a *map* loaded by the server at the start of the game.
 The gold nuggets are randomly distributed in *piles* within the rooms.
