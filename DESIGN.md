@@ -16,33 +16,70 @@ The *client* acts in one of two modes:
  2. *player*, the interactive game-playing mode described in the requirements spec.
 
 ### User interface
-
-See the requirements spec for both the command-line and interactive UI.
-
-> You may not need much more.
+ *a spectator can only quit the game*
+* `Q` quit the game.
+ * `h` move left, if possible
+ * `l` move right, if possible
+ * `j` move down, if possible
+ * `k` move up	, if possible
+ * `y` move diagonally up and left, if possible
+ * `u` move diagonally up and right, if possible
+ * `b` move diagonally down and left, if possible
+ * `n` move diagonally down and right, if possible
 
 ### Inputs and outputs
 
-> Briefly describe the inputs (keystrokes) and outputs (display).
-> If you write to log files, or log to stderr, describe that here.
-> Command-line arguments are not 'input'.
+**Inputs (from  requirments spec):**
+ ```
+ ./client hostname port [playername]
+ ```
+ To start the client, one must include one argument hostname port, and playername. The hostname is found from the output of the server.
+
+**Outputs:**
+ * error messages are logged to the file given in command line input
+ * the game display to stdout
 
 ### Functional decomposition into modules
 
-> List and briefly describe any modules that comprise your client, other than the main module.
+1. *main*, recieves input when client is called from the command line, calls *parseArgs*, and calls *handleInputs*
+2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not.
+3. *handleInputs* watches for key board inputs from the user, sends them to the server watching, watches for new information from the server
+4. *updateDisplay* outputs the correct status and game display to stdout
  
 ### Pseudo code for logic/algorithmic flow
 
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> See the Server section for an example.
+**main:**
 
-> Then briefly describe each of the major functions, perhaps with level-4 #### headers.
+    initialize pointers to required inputs
+    pass the pointers and argc and argv to handle args
+    Initialize the display.
+    Initialize the network and join the game with a PLAY or SPECTATE message depending on the output of parseArgs.
+    call handle inputs
+
+**parseArgs:**
+    
+    check if number of arguments is greater than 3
+    validate the error log file as readable exit-non zero if not
+    check if the there is a playername return 0 if the player is a spectator and 1 if not
+    
+
+**handleInputs:**
+    
+    while there is keyboard input
+        send all keyboard inputs to the server
+        if new information is recieved the server call update display
+    send quit to the server and print game summary
+
+**updateDisplay**
+    
+    get gameboard from server
+    check if window size is large enough
+        if so output the updated status line and gameboard to stdout
+    
 
 ### Major data structures
 
-> A language-independent description of the major data structure(s) in this program.
-> Mention, but do not describe, any libcs50 data structures you plan to use.
+No major data structures are needed for the client.
 
 ---
 
@@ -161,9 +198,7 @@ The server will run as follows:
 #### Game struct:
         * master: A grid struct variable to store all grid data
 		* int seed: Optional seed entered to determine finite characterics of grid
-        * player: player hastable where name as key, IP address as hashtable and his current location as item in an array
-        * visibilityTable: player name as key, 2D array of grid parts he has seen as item
-        * goldCounter: player letter (casted as integer) as key, gold collected as count
+        * player: player hastable where A-Z character as key, player data structure as item
         * int goldTotal: total gold that exists in the game
         * int goldNumPilesLeft: remaining gold left in the game
         * int goldCollected: number of gold collected in the game
@@ -256,20 +291,78 @@ The grid_t* structure will also hold the integer number of rows and the number o
 
 ---
 
-## Player Module
+## Player Module (data structure, different than client)
 
-> Repeat this section for each module that is included in either the client or server.
+The player module will have the data structure that the server program will use to store and access information about a player.
+
+The main data structure in the player module will be the player_t struct. This structure will contain either pointers to the stored values or if they are integers, the value of the integer. 
 
 ### Functional decomposition
 
-> List each of the main functions implemented by this module, with a phrase or sentence description of each.
+1. *player_new*
+2. *player_getGold*
+3. *player_setGold*
+4. *player_getVisibilityMap*
+5. *player_setVisibilityMap*
+6. *player_getXPosition*
+7. *player_setXPosition*
+8. *player_getYPosition*
+9. *player_setYPosition*
+10. *player_setPosition*
+11. *player_getRealName*
+12. *player_delete*
 
 ### Pseudo code for logic/algorithmic flow
 
-> For any non-trivial function, add a level-4 #### header and provide tab-indented pseudocode.
-> This pseudocode should be independent of the programming language.
+Functions in the player module will be called by actions in the server module. Each player struct will be accessed by its corresponding alphabetical letter key. 
+
+#### player_new 
+
+> Allocate memory for and initialize a new player data 
+> Set values for gold as 0, position at current position, name as given if less than maxNameLength (truncates and stores if not)
+
+#### player_getGold
+    
+> Returns an integer representing the players current gold
+    
+#### player_setGold
+
+> Updates the integer representing the players current gold
+
+#### player_getVisibilityMap
+
+> Returns an array of arrays with each element in the outer array representing a row in the map and each inner array representing a collumn in that array 
+> The values stored in each inner array will either be 0 (if that coordinate in that map has not been seen) and 1 (if that coordinate in that map has been seen)
+
+#### player_addVisibilityMap
+
+> Adds either a 0 or a 1 to the inner array at the correct x (outer array) and correct y (inner array)
+
+#### player_getXPosition
+
+> Returns the players current x position on the map 
+
+#### player_setXPosition
+
+> Sets the players current x position on the map 
+
+#### player_getYPosition
+
+> Returns the players current y position on the map 
+
+#### player_setYPosition
+
+> Sets the players current y position on the map
+
+#### player_getRealName
+
+> Returns the players real name (truncated version less than given at the start of the game 
+
+#### player_delete
+
+> Frees individual components of the player data structure and frees that entire struct
 
 ### Major data structures
 
-> Describe each major data structure in this module: what information does it represent, how does it represent the data, and what are its members.
-> This description should be independent of the programming language.
+The player structure will store the (integer) amount of gold a player has, the position of the player, an array of arrays of the size of the map that masks where the player has been visible.
+
