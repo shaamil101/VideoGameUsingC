@@ -228,15 +228,15 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 `isVisible` is a private-to-the-module (static) method that returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
 
 	validate args
-	switch through 3 cases: vertical up line (change in columns is 0, change in rows is positive), vertical down line (change in columsn is 0, change in rows is negative), horizontal right line (change in rows is 0, change in columns is positive), horizontal left line (change in rows is 0, change in columns is negative) and sloped line (non-zero change in rows and columns)
-	vertical up line case:
+	switch through 3 cases: vertical down line (change in columns is 0, change in rows is positive), vertical up line (change in columsn is 0, change in rows is negative), horizontal right line (change in rows is 0, change in columns is positive), horizontal left line (change in rows is 0, change in columns is negative), sloped right line (non-zero change in rows and columns, but change in columns is positive), sloped left line case (non-zero change in rows and columns, but change in columns is negative)
+	vertical down line case:
 		get row difference between player and test point
 		for each gridpoint along the row (player position incremented by (1 to testpoint]
 			if gridpoint is opaque character (not room space '.')
 			return false
 		return true (we've made it to the end of the line segement)
 	
-	vertical down line case:
+	vertical up line case:
 		get row difference between player and test point
 		for each gridpoint along the row (player position decremented by (1 to testpoint]
 			if gridpoint is opaque character (not room space '.')
@@ -257,14 +257,36 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 			return false
 		return true (we've made it to the end of the line segement)
 
-	sloped line case:
+	sloped right line case:
 		get the (float) slope of the line from player point to test point (change in rows divided by change in columns)
-		get 
+		get column difference 
+		for each column between the player and test position (increment by 1 each time to go right)
+			get the (float) row value of the line by doing (player_point + (change in column index * slope))
+			if float is an integer:
+				if gridpoint is opaque character
+					return false
+			else:
+				with the integer row value rounded up and the integer row value rounded down,
+				if both are an opaque character
+					return false
+		return true (we've made it to the end of the line segement)
 
-
+	sloped left line case:
+		get the (float) slope of the line from the player point to test point
+		get column difference
+		for each column between the player and test position (decrement by 1 each time to go left)
+			get the (float) row value of the line by doing (player_point + (change in column index * slope))
+			if float is an integer:
+				if gridpoint is opaque character
+					return false
+			else:
+				with the integer row value rounded up and the integer row value rounded down,
+				if both are an opaque character
+					return false
+		return true (we've made it to the end of the line segement)
+					
 
 #### maps_getVisiblePoints
-
 
 
 
