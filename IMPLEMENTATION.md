@@ -228,6 +228,7 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 `isVisible` is a private-to-the-module (static) method that returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
 
 	validate args
+		make sure both points row and column values are equal to or less than the map row and column (and non-negative)
 	switch through 3 cases: vertical down line (change in columns is 0, change in rows is positive), vertical up line (change in columsn is 0, change in rows is negative), horizontal right line (change in rows is 0, change in columns is positive), horizontal left line (change in rows is 0, change in columns is negative), sloped right line (non-zero change in rows and columns, but change in columns is positive), sloped left line case (non-zero change in rows and columns, but change in columns is negative)
 	vertical down line case:
 		get row difference between player and test point
@@ -287,29 +288,44 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 					
 
 #### maps_getVisiblePoints
+`maps_getVisiblePoints` returns a list (array) of visible points for a base map for a player's position, using the static isVisible method. Caller must later free array.
 
-
+	allocate memory for gridpoint array, of size num_rows*num_cols (max number of visible points)
+	keep track of index adding to array (start at 0)
+	for each row r in map
+		for each col c in map
+			if isVisible(player row, player col, r, c)
+				add gridpoint array
+				increment array index
+	return array
 
 #### maps_getRandomGridpoint
+returns a random gridpoint from a map, using the rand() method. **Random module must be first initialized by the server seed with srand(seed or getPID).** The rand() method's integer range is 0 to 2147483647 (from stdlib.h), so if we take one of those random numbers moduloed with the number of rows and number of columns (which we can assume for user playability will be much less than that max int), then it will be a pretty random value. That won't hold up if we get modulus values that get near the magnitude of the max int, but we won't get there with the size maps we're dealing with.
 
-
-
+	initialize new matrixIndex struct
+	set row of 2d index to (rand() % map->numRows)
+	set col of 2d index to (rand() % map->numCols)
+	return matrixIndex struct (must later be freed)
 
 #### maps_delete
+`maps_delete` frees all the memory wrapped inside a map module, which is really just the 2d array and then the struct itself.
 
-
-
+	free the 2d array grid in the map struct
+	free the map struct
 
 #### maps_newMatrixIndex
+Allocates memory for and initializes a new matrix index struct
 
-
-
+	validate arg (no negative numbers, return null if so)
+	assert / allocate memory for a matrixIndex struct
+	set the row to the given row
+	set the col to the given col
+	return pointer to the struct
 
 #### maps_deleteMatrixIndex
+free the memory for a matrix index struct
 
-
-
-
+	call free() on the struct if not null
 
 ---
 
