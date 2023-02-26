@@ -241,18 +241,23 @@ The server should store what gridpoints have been viewed by the player, and the 
 
 ### Functional decomposition
 
- 1. *maps_read*, reads a map.txt file and loads it into a grid struct
- 2. *maps_blankgrid*, converts the grid struct into a text representation of the map, without players or gold overlaid
+ 1. *maps_new*, reads a map.txt file and loads it into a grid struct
+ 2. *maps_basegrid*, converts the grid struct into a text representation of the map, without players or gold overlaid
  3. *maps_fullgrid*, converts the grid struct into a text representation of the map with all the players and gold overlaid
  4. *maps_playergrid*, converts the grid struct into a text representation of the map with only what a given player has seen, and only visible gold
- 5. *maps_getDims*, returns the dimensions of the grid
+ 5. *maps_getRows*, returns the number of rows of the grid
+ 1. *maps_getCols*, returns the number of columns of the grid
+ 1. *isVisible*, private that returns whether or not a point is visble from another point on the base map
  6. *maps_getVisiblePoints*, returns a list of points visible from a certain point
  7. *maps_getRandomGridpoint*, returns a random, valid (empty room) gridpoint
+ 1. *maps_delete* deletes the map
+ 1. *maps_newMatrixIndex* creates a new matrix index structure that holds a row and column index
+ 1. *maps_deleteMatrixIndex* deletes the matrix index
 
 
 ### Pseudo code for logic/algorithmic flow
 
-#### maps_read
+#### maps_new
 
 		open and validate the given maps.txt file
 		go through text file and get dimensions of map
@@ -260,7 +265,7 @@ The server should store what gridpoints have been viewed by the player, and the 
 		declare arrays of integers for grid struct
 		go through text file and load characters into the grid struct
 
-#### maps_blankgrid
+#### maps_basegrid
 
 		go through grid struct and return each character row separated by new lines
 
@@ -279,9 +284,13 @@ The server should store what gridpoints have been viewed by the player, and the 
 		if the (x,y) is gold, add * instead of room space to the string
 		otherwise spit out the char in the grid, rows separated by new line
 
-#### maps_getDims
+#### maps_getRows
 
-	return number of rows and number of columns of grid
+	return number of rows of grid
+
+#### maps_getCols
+
+	return number of columns of grid
 
 #### maps_getVisiblePoints
 
@@ -297,6 +306,19 @@ The server should store what gridpoints have been viewed by the player, and the 
 	pick a random one from that list
 	return that one
 
+#### maps_delete
+
+	delete the maps structure
+ 
+#### maps_newMatrixIndex
+
+	validate row and column arguments are non-negative
+	create a new matrix index structure with a given row and column
+ 
+#### maps_deleteMatrixIndex
+
+	delete the matrix index structure
+
 ### Major data structures
 
 There will be a main data structure in the maps/visibility module will be the grid_t struct. This structure should hold the array of arrays of chars for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
@@ -308,6 +330,8 @@ There will be a main data structure in the maps/visibility module will be the gr
    * `#` an empty passage spot
 
 The grid_t* structure will also hold the integer number of rows and the number of columns for easy iteration boundaries.
+
+There will also be a matrixIndex structure that wraps a row and column integer index together for easy representation of a 2d point in the grid matrix.
 
 ---
 
