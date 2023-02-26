@@ -108,7 +108,7 @@ typedef struct matrixIndex {
 
 ```C
 map_t* maps_new(char* mapTextAddress);
-char* maps_blankgrid(map_t* map);
+char* maps_basegrid(map_t* map);
 char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
 char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
 int maps_getRows(map_t* map);
@@ -138,8 +138,8 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 		add the char to the matrix under that row,col count
 	return the map struct
 
-#### maps_blankgrid
-`maps_blankgrid` renders the map into the string to pass to the client without any gold or players on it
+#### maps_basegrid
+`maps_blasegrid` renders the map into the string to pass to the client without any gold or players on it
 
 	validate args
 	allocate memory for string holding grid
