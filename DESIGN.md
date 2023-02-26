@@ -36,50 +36,60 @@ The *client* acts in one of two modes:
  To start the client, one must include one argument hostname port, and playername. The hostname is found from the output of the server.
 
 **Outputs:**
- * error messages are logged to the file given in command line input
- * the game display to stdout
+ * error messages are logged to stderr
+ * status messages above the display
+ * the game display
 
 ### Functional decomposition into modules
 
-1. *main*, recieves input when client is called from the command line, calls *parseArgs*, and calls *handleInputs*
+1. *main*, recieves input when client is called from the command line, calls *parseArgs*, calls *startClient*, calls *message_loop*, calls *message_done*, and initializes a client data structure.
 2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not.
-3. *handleInputs* watches for key board inputs from the user, sends them to the server watching, watches for new information from the server
-4. *updateDisplay* outputs the correct status and game display to stdout
+3. *handleInputs* function used by message_loop for handling key inputs
+4. *handleMessage* function used by message_loop for handling the messages
+5. *handleQuit* handles the quit message
+6. *handleGold* handles the gold message
+7. *handleGrid* handles the grid message
+8. *handleDisplay* handles the display message
+9. *handleError* handles the error message
  
 ### Pseudo code for logic/algorithmic flow
 
 **main:**
 
-    initialize pointers to required inputs
-    pass the pointers and argc and argv to handle args
-    Initialize the display.
-    Initialize the network and join the game with a PLAY or SPECTATE message depending on the output of parseArgs.
-    call handle inputs
+	allocate memory for a client data structure
+	initialize pointers to required inputs
+	pass the pointers and argc and argv to parseArgs
+	call startClient
+	call message_loop
+	call message_done
+	free client memory
 
 **parseArgs:**
     
-    check if number of arguments is greater than 3
-    validate the error log file as readable exit-non zero if not
-    check if the there is a playername return 0 if the player is a spectator and 1 if not
+    check if number of arguments is greater than or less than 3
+	check if the port number is retrievable
+	check setting the server address
+	else return a 1 if there is a player name and 0 if not
     
 
 **handleInputs:**
     
-    while there is keyboard input
-        send all keyboard inputs to the server
-        if new information is recieved the server call update display
-    send quit to the server and print game summary
+    gets key inputs and sends message to server
 
-**updateDisplay**
+**handleMessage**
     
-    get gameboard from server
-    check if window size is large enough
-        if so output the updated status line and gameboard to stdout
+	calls the correct handle method for the message recieved
+    
+**startClient**
+    
+    set up nCurses
+	draw the screen
+	build and send a key message from user input to the server
     
 
 ### Major data structures
 
-No major data structures are needed for the client.
+There will be a client data structure that holds important information such as server address in one place
 
 ### Testing plan
 
