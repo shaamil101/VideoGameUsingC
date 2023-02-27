@@ -108,13 +108,34 @@ bool server_message(void* arg, const addr_t from, const char* message);
 
 #### `server_message`:
 
-	validate commandline
-	verify map file can be opened for reading
-	if seed provided based on no. of arguments
-		verify it is a valid seed number
-		seed the random-number generator with that seed
-	else
-		seed the random-number generator with getpid()
+	Parses message by message type
+	if message type is 'PLAY':
+		Checks whether max player has been reached:
+			if so, reply with 'QUIT' message;
+		Checks validity of name:
+			if name is valid:
+				call name_truncate with name and allowed length;
+				Decide letter for player;
+				Reply with 'OK Letter','GRID' and 'GOLD' message;
+				Stores processed name of player;
+			if name is invalid:
+				Responds with 'QUIT' message;
+	if message type is 'SPECTATE':
+		Reply with 'GRID' and 'GOLD' message'
+		continue to update this spectator with complete display in loop
+	if message type is 'QUIT':
+		calls server_removePlayer
+	if message type is 'KEY':
+		validate whether key is allowed
+		if key is allowed:
+			update player location in struct
+			update gold info if changed
+			update the master display(for server and spectator to see)
+			for all the player:
+				Determine their visibility(call visibility)
+				Reply with 'DISPLAY' message accordingly
+			for all spectators:
+				Reply with master 'DISPLAY' message
 
 ---
 
