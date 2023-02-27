@@ -15,45 +15,11 @@ Shaamil is writing server program
 Jake is writing player module
 Jack is writing client program
 
-## Player
-
-> Teams of 3 students should delete this section.
-
-### Data structures
-
-> For each new data structure, describe it briefly and provide a code block listing the `struct` definition(s).
-> No need to provide `struct` for existing CS50 data structures like `hashtable`.
-
-### Definition of function prototypes
-
-> For function, provide a brief description and then a code block with its function prototype.
-> For example:
-
-A function to parse the command-line arguments, initialize the game struct, initialize the message module, and (BEYOND SPEC) initialize analytics module.
-
-```c
-static int parseArgs(const int argc, char* argv[]);
-```
-### Detailed pseudo code
-
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> For example:
-
-#### `parseArgs`:
-
-	validate commandline
-	initialize message module
-	print assigned port number
-	decide whether spectator or player
-
----
-
 ## Server
 
 ### Data structures
 
-We need two primary data structures. The first will be for the entire game and another player structure with the player attributes. The first structure is the game structure with the following elements:
+We need one primary data structure for the entire game logic. The game structure has the following elements:
 
 ```c
 typedef struct game {
@@ -62,24 +28,14 @@ typedef struct game {
   int goldCollected;             
   int goldLeft; 
   addr_t spectator; //Spectator address
-  grid_t* mainGrid;  //Stores the m
+  grid_t* mainGrid;  //Stores the main grid
+  int goldPiles[numberOfRows][numberOfColumns]; //stores the locations of gold piles
   int numberOfRows;
   int numberOfColumns;
   player_t* players[MaxPlayers]; //array of player struct
   int numPlayer; 
   
 } game_t;
-
-typedef struct player {
-  int row;                         // row
-  int col;                         // column 
-  addr_t IP;                       // IP address
-  char realName[MaxNameLength + 1];
-  char alias;                       // letter assigned
-  int gold;                        // gold in purse
-  int justCollected;
-  grid_t* seenGrid;
-} player_t;
 
 ```
 ### Definition of function prototypes
@@ -124,7 +80,7 @@ bool server_message(void* arg, const addr_t from, const char* message);
 		Reply with 'GRID' and 'GOLD' message'
 		continue to update this spectator with complete display in loop
 	if message type is 'QUIT':
-		calls server_removePlayer
+		calls player_delete
 	if message type is 'KEY':
 		validate whether key is allowed
 		if key is allowed:
@@ -137,6 +93,142 @@ bool server_message(void* arg, const addr_t from, const char* message);
 			for all spectators:
 				Reply with master 'DISPLAY' message
 
+A function that accepts a player and removes it by calling the remove player 
+
+```c
+bool handlePlay(void* arg, const addr_t from, const char* name)
+```
+
+#### `handlePlay`:
+
+	if the game is full
+        send a quit message back to the player
+    if the name is Empty
+        send a quit message back
+    otherwise
+        create a new player by calling the player module function
+        copy the player name in to the real name
+        initialize gold related variable
+        drop the player on to the grid, update the player location and the master grid
+        increment the number of players in the game
+        send update to all clients
+
+A function that accepts a player and removes it by calling the remove player 
+
+```c
+bool handleKEY(void* arg, const addr_t from, const char* key);
+```
+
+#### `handleKey`:
+
+	if the key is Q
+        call handleQUIT with the IP
+        return flase to continue the loop
+    otherwise
+        depending on the key
+            for lower case
+                call player_move with new location
+            for Upper case
+                call player_move with new location until return true
+    if no gold left
+        return true
+    else
+        return false
+
+A function that drops random piles of gold with random counts
+
+```c
+static void server_dropGold(void);
+```
+
+#### `server_dropGold`:
+
+	generate a random number for the number of goldpiles
+    for each pile
+        generate random location update the mastergrid
+        while that location is a empty room spot
+            generate a new random location
+        update the 2d integer array for the gold piles
+
+A function that drops players in random locations
+
+```c
+static void server_dropPlayer(player_t* player);
+```
+
+#### `server_dropPlayer`:
+
+	Generate random valid x location
+	Generate random valid y location
+	Set x location by calling player module
+	Set y location by calling player module
+
+
+A function that process player movement by checking the new positions the player wants to move and acting accordingly
+
+```c
+bool player_move(player_t* player, int new_row, int new_col);
+```
+
+#### `player_move`:
+
+	if the new location is allowed to move to 
+        if the new location is a player
+            switch positions
+            update grid
+            send update to all clients
+            return false
+        if the new location is gold
+            update the new location of the player
+            update grid 
+            call player add gold to pick up gold
+            send update to all clients
+        else (location is just empty room spot)
+            update the new location of the player
+            replace the old location with the original character
+            update grid
+            send update to all clients
+            return false
+    else
+        return true
+
+A function that process the function of creating a new spectator when needed and calling the message module
+```c
+bool handleSpectate(void* arg, const addr_t from);
+```
+
+#### `handleSpectate`:
+
+	 if there exists one spectator
+        send a quit message to the existing one
+    store the spectator IP in to game struct (auto replace if needed)
+    send a grid info message
+    update all clients
+    return false
+
+A function that ends the game by printing a tabular form of results
+```c
+static void server_gameOver(void);
+```
+
+#### `server_gameOver`:
+
+	Print out a summary of each player and the respecitve gold nuggets collected in a tabular form 
+
+A function that ends the game by printing a tabular form of results
+```c
+static void server_update_all_clients(void);
+```
+
+#### `server_update_all_clients`:
+
+	if there is a spectator
+			send gold info 
+			send the master grid
+		iterate through every player
+			send gold info 
+			reset the just picked up gold to zero
+			call set_visibility to get the visibilty grid and send
 ---
 
 ## Client
