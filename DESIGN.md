@@ -380,20 +380,24 @@ Functions in the player module will be called by actions in the server module. E
 > Allocate memory for and initialize a new player data 
 > Set values for gold as 0, position at current position, name as given if less than maxNameLength (truncates and stores if not)
 
+#### player_delete
+
+> Frees individual components of the player data structure and frees that entire struct
+
 #### player_getGold
     
 > Returns an integer representing the players current gold
     
-#### player_setGold
+#### player_addGold
 
 > Updates the integer representing the players current gold
 
-#### player_getVisibilityMap
+#### player_getSeenMap
 
 > Returns an array of arrays with each element in the outer array representing a row in the map and each inner array representing a collumn in that array 
 > The values stored in each inner array will either be 0 (if that coordinate in that map has not been seen) and 1 (if that coordinate in that map has been seen)
 
-#### player_addVisibilityMap
+#### player_addSeenMap
 
 > Adds either a 0 or a 1 to the inner array at the correct x (outer array) and correct y (inner array)
 
@@ -415,11 +419,12 @@ Functions in the player module will be called by actions in the server module. E
 
 #### player_getRealName
 
-> Returns the players real name (truncated version less than given at the start of the game 
+> Returns the players real name (truncated version less than max length) given at the start of the game)
 
-#### player_delete
+#### player_getIP
 
-> Frees individual components of the player data structure and frees that entire struct
+> Returns the players IP address
+
 
 ### Major data structures
 
