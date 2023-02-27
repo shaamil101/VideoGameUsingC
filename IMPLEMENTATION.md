@@ -1,6 +1,6 @@
 # CS50 Nuggets
 ## Implementation Spec
-### Team name, term, year
+### Wall Street Djournal - CS50 23W
 
 > This **template** includes some gray text meant to explain how to use the template; delete all of them in your document!
 
@@ -491,6 +491,12 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 
 	validate args
 	return numCols int of given map struct
+	
+#### maps_getGridpoint
+Returns the char at the row, column index of a given map grid
+
+	validate args (valid map, non-negative row and column)
+	return char at that index
 
 #### maps_getGridpoint
 Returns the char at the row, column index of a given map grid
