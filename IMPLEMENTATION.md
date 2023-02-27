@@ -54,30 +54,64 @@ static int parseArgs(const int argc, char* argv[]);
 
 ### Data structures
 
-> For each new data structure, describe it briefly and provide a code block listing the `struct` definition(s).
-> No need to provide `struct` for existing CS50 data structures like `hashtable`.
+We need two primary data structures. The first will be for the entire game and another player structure with the player attributes. The first structure is the game structure with the following elements:
 
+```c
+typedef struct game {
+  //Tracking gold left and collected
+  int GoldNumPilesLeft;
+  int goldCollected;             
+  int goldLeft; 
+  addr_t spectator; //Spectator address
+  grid_t* mainGrid;  //Stores the m
+  int numberOfRows;
+  int numberOfColumns;
+  player_t* players[MaxPlayers]; //array of player struct
+  int numPlayer; 
+  
+} game_t;
+
+typedef struct player {
+  int row;                         // row
+  int col;                         // column 
+  addr_t IP;                       // IP address
+  char realName[MaxNameLength + 1];
+  char alias;                       // letter assigned
+  int gold;                        // gold in purse
+  int justCollected;
+  grid_t* seenGrid;
+} player_t;
+
+```
 ### Definition of function prototypes
 
-> For function, provide a brief description and then a code block with its function prototype.
-> For example:
-
-A function to parse the command-line arguments, initialize the game struct, initialize the message module, and (BEYOND SPEC) initialize analytics module.
+A function to parse the command-line arguments, initialize the game struct, initialize the message module, and create random behavior based on whether or not the seed phrase has been passed.
 
 ```c
 static int parseArgs(const int argc, char* argv[]);
 ```
-### Detailed pseudo code
-
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> For example:
 
 #### `parseArgs`:
 
 	validate commandline
 	verify map file can be opened for reading
-	if seed provided
+	if seed provided based on no. of arguments
+		verify it is a valid seed number
+		seed the random-number generator with that seed
+	else
+		seed the random-number generator with getpid()
+		
+A function for sending and receiving messages a. play, When the message type is to play, initalize new player characteristics b. spectate, Allow spectator to view the game c. quit, Handle quitting message with table summer d. key, Handle multiple key inputs
+
+```c
+bool server_message(void* arg, const addr_t from, const char* message);
+```
+
+#### `server_message`:
+
+	validate commandline
+	verify map file can be opened for reading
+	if seed provided based on no. of arguments
 		verify it is a valid seed number
 		seed the random-number generator with that seed
 	else
