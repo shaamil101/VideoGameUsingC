@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "log.h": "c",
+    "file.h": "c",
+    "ctype.h": "c"
+  }
+}
