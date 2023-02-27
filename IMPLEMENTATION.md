@@ -10,9 +10,10 @@ We avoid repeating information that is provided in the requirements spec.
 
 ## Plan for division of labor
 
-> Update your plan for distributing the project work among your 3(4) team members.
-> Who writes the client program, the server program, each module?
-> Who is responsible for various aspects of testing, for documentation, etc?
+Wyatt is writing maps / visibility
+Shaamil is writing server program
+Jake is writing player module
+Jack is writing client program
 
 ## Player
 
