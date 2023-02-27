@@ -110,6 +110,20 @@ int maps_getRows(map_t* map);
 */
 int maps_getCols(map_t* map);
 
+/** maps_getGridpoint
+ * 
+ * Returns the char at the row, column index of a given map grid
+ * 
+ * Caller provides
+ *  valid map pointer
+ *  valid (non-negative) row
+ *  valid (non-negative) column
+ * We return
+ *  char at that gridpoint
+ *  Null char if anything invalid
+*/
+char maps_getGridpoint(map_t* map, int row, int col);
+
 /** maps_getVisiblePoints
  * 
  * Returns a list of visible matrixIndices from a given player's position

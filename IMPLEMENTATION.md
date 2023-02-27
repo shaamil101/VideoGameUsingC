@@ -113,6 +113,7 @@ char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
 char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
 int maps_getRows(map_t* map);
 int maps_getCols(map_t* map);
+char maps_getGridpoint(map_t* map, int row, int col);
 static bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
 matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
 matrixIndex_t* maps_getRandomGridpoint(map_t* map);
@@ -179,7 +180,7 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 	return the string
 
 #### maps_playergrid
-`maps_playergrid` renders the map into the string to pass to the client with only the gridpoints, gold, and players visible to a given player.
+`maps_playergrid` renders the map into the string to pass to the client with only the gridpoints seen by a given player and gold, and players visible to a given player.
 
 	validate args
 	create gold grid from gold list, a 2d array of integers with same dimensions as the map that has the amount of gold at that point (0 if no gold there)
@@ -191,6 +192,8 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 		initialize the empty 2d array of chars
 		iterate through player list
 			set the char at the row,col of the player to the char [A-Z] representing the player 
+
+	create remembered points grid from given player's list of 
 
 	create visibility grid from given player's visible points, 2d array of bools with same dims as map
 		initialize the empty 2d array of bools to all false
@@ -223,6 +226,12 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 
 	validate args
 	return numCols int of given map struct
+
+#### maps_getGridpoint
+Returns the char at the row, column index of a given map grid
+
+	validate args (valid map, non-negative row and column)
+	return char at that index
 
 #### isVisible
 `isVisible` is a private-to-the-module (static) method that returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
