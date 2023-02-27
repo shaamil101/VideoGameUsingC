@@ -476,6 +476,166 @@ Allocates memory for and initializes a new matrix index struct
 free the memory for a matrix index struct
 
 	call free() on the struct if not null
+---
+
+## Player
+
+### Data structures
+
+The player data stucture to hold the player name, player gold, player visibility map, player x and y position.
+
+```c
+typedef struct player{
+    int x;                        
+    int y;                    
+    grid_t* seenGrid;
+ 	addr_t IP;                     
+    char realName[MaxNameLength];
+    char letterAsisgned;                      
+    int gold;                      
+    int justCollected;player_t; 
+} player_t; 
+```
+
+### Definition of function prototypes
+
+```c
+player_t* player_new(const char* playerName, const char* ipAddress, int* maxCharacters, int* totalRows, int* totalCollumns);
+void player_delete(player_t* player);
+void player_addGold(player_t* player, int* gold);
+int player_getGold(player_t* player);
+void player_addSeenMap(player_t* player, int* row, int* collumn);
+bool** player_getSeenMap(player_t* player);
+void player_setXPosition(player_t* player, int* xPos);
+int player_getXPosition(player_t* player);
+void player_setYPosition(player_t* player, int* yPos);
+int player_getYPosition(player_t* player);
+char* player_getIP(player_t* player);
+```
+
+### Detailed pseudo code
+
+#### player_new
+
+Allocates memory for a new player object, instantiates values for gold, creates visibility map, gets random location for player, stores the players name (truncates if necessary), sets the ipAddress as the address given
+
+	validate args 
+	allocate space for new player object
+	if player name is not less than max length 
+		truncate length of name given to have no more than maxCharacters
+		set name to truncated name
+	set name as given name
+	allocate memory for real name
+	set realName as name
+	sets ipAddress as ipAddress given
+	set gold to 0
+	allocate space for visibility map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays)
+	if map is instantiated
+		get random gridpoint from the map 
+		set x to collumn from gridpoint
+		set y to row from gridpoint
+	return player object
+
+#### player_delete
+
+frees the player object and the values stored within it 
+
+	if player is valid
+		free visability map
+		free realName 
+		free player
+	return
+
+#### player_addGold
+
+takes in an integer representing an amount of gold increments the players 
+gold amount 
+
+	if player is valid
+		if gold is greater than 0
+			get players gold 
+			increment the gold by integer given 
+			set players gold as new value 
+	return 
+
+#### player_getGold
+
+returns an integer representing the players gold 
+
+	if player is valid 
+		get gold 
+		return gold 
+	return null
+
+
+#### player_addSeenMap
+
+Adds either true or false to the inner array at the correct x (outer array) and correct y (inner array)
+
+	if player is valid 
+		if x and y are greater than or euqal to 0 and less than or equal to max row or collums 
+		index into the array with given row and collumn insert the boolean true indicating the spot is visible
+	return 
+
+
+#### player_getSeenMap
+
+Returns an array of arrays storing either true or false for each point on the map indicating whether a player can see it or not 
+
+	if player is valid
+		get seen map 
+		return seen map 
+	return null
+
+#### player_setXPosition
+Sets the players current x position on the map 
+
+	if player is valid 
+		if x is greater than or equal to 0 and less than or equal to max collumns
+			set players x value as value given 
+return 
+
+#### player_getXPosition
+Returns the players current x position on the map 
+
+	if player is valid
+		get players x position 
+		return x position 
+	return null
+
+#### player_setYPosition
+Sets the players current y position on the map 
+
+	if player is valid 
+		if y is greater than or equal to 0 and less than or equal to max rows
+			set players x value as value given 
+	return 
+
+#### player_getYPosition
+Returns the players current y position on the map 
+
+	if player is valid
+		get players y position 
+		return y position 
+	return null
+
+#### player_getRealName
+
+Returns the players real name (truncated version less than max length) given at the start of the game)
+
+	if player is valid 
+		get players real name 
+		return real name 
+	return null
+
+### player_getIP
+
+Returns the players IP address
+
+	if player is valid
+		get players ip address
+		return ip address
+	return null
 
 ---
 
