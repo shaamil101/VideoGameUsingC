@@ -612,19 +612,24 @@ free the memory for a matrix index struct
 
 ### unit testing
 
-> How will you test each unit (module) before integrating them with a main program (client or server)?
+We can write a unit test for the maps module that will test load a few maps and test visibility methods, but the integration with the server will be tested while using the server.
+
+The player module works so closely with the server that player module testing will happen in server program testing.
+
 
 ### integration testing
 
-> How will you test the complete main programs: the server, and for teams of 4, the client?
+The server will be tested by having a dummy client send pre-determined messages testing all messages (including invalid ones and edge cases, and testing all player movement behavior, including normal behavior and erratic behavior.
+
+The client will be tested by having a dummy server sending pre-determined messages to the client, testing all communcations (including invalid ones), and sending different map strings and other server messages, including edge cases for messages.
 
 ### system testing
 
-> For teams of 4: How will you test your client and server together?
+The server and client will be tested by using set seeds to allow for determined gold positioning and amounts. We can run with given client bots to test any behavior, and run the server on plank and client on our own machines to test client-server connections.
 
 ---
 
 ## Limitations
 
-> Bulleted list of any limitations of your implementation.
-> This section may not be relevant when you first write your Implementation Plan, but could be relevant after completing the implementation.
+-
+-
