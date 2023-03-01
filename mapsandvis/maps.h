@@ -144,6 +144,25 @@ char maps_getMapNodeItem(mapNode_t* node);
 */
 void* maps_getMapNodeType(mapNode_t* node);
 
+/** maps_setMapNodeItem
+ * 
+ * Sets the char item for a given mapNode
+ * 
+ * Caller provides:
+ *  valid mapNode pointer
+ *  char in the mapNode
+*/
+void maps_setMapNodeItem(mapNode_t* node, char item);
+
+/** maps_getMapNodeType
+ * 
+ * Returns the void* type for a given mapNode
+ * 
+ * Caller provides:
+ *  valid mapNode pointer
+ *  valid void* type in the mapNode (player or gold)
+*/
+void maps_setMapNodeType(mapNode_t* node, void* type);
 
 /** maps_isVisible
  * 
