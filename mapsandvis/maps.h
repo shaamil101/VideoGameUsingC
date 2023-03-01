@@ -158,6 +158,18 @@ matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
 */
 matrixIndex_t* maps_getRandomGridpoint(map_t* map);
 
+/** maps_setTotalGoldLeft
+ * 
+ * Sets the integer total gold left in a map
+*/
+void maps_setTotalGoldLeft(map_t* map, int totalgoldleft);
+
+/** maps_getTotalGoldLeft
+ * 
+ * Gets the integer total gold left in a map
+*/
+int maps_getTotalGoldLeft(map_t* map);
+
 /** maps_delete
  * 
  * Frees a given map from memory

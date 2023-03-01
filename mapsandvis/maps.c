@@ -30,6 +30,7 @@ typedef struct map{
   mapNode_t*** grid; //2d array of mapNode_t pointers
 	int numRows;
 	int numCols;
+  int totalGoldLeft;
 } map_t;
 
 typedef struct matrixIndex {
@@ -229,6 +230,18 @@ matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
  * Caller is responsible for later freeing matrixIndex pointer
 */
 matrixIndex_t* maps_getRandomGridpoint(map_t* map);
+
+/** maps_setTotalGoldLeft
+ * 
+ * Sets the integer total gold left in a map
+*/
+void maps_setTotalGoldLeft(map_t* map, int totalgoldleft);
+
+/** maps_getTotalGoldLeft
+ * 
+ * Gets the integer total gold left in a map
+*/
+int maps_getTotalGoldLeft(map_t* map);
 
 /** maps_delete
  * 
