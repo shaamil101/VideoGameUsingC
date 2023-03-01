@@ -191,19 +191,43 @@ int maps_getRows(map_t* map);
 */
 int maps_getCols(map_t* map);
 
-/** maps_getGridpoint
+/** maps_getMapNode
  * 
- * Returns the char at the row, column index of a given map grid
+ * Returns the mapNode at the row, column index of a given map grid
  * 
  * Caller provides
  *  valid map pointer
  *  valid (non-negative) row
  *  valid (non-negative) column
  * We return
- *  char at that gridpoint
- *  Null char if anything invalid
+ *  mapNode pointer at that gridpoint
+ *  Null pointer if anything invalid
 */
-char maps_getGridpoint(map_t* map, int row, int col);
+mapNode_t* maps_getMapNode(map_t* map, int row, int col);
+
+/** maps_getMapNodeItem
+ * 
+ * Returns the char item for a given mapNode
+ * 
+ * Caller provides:
+ *  valid mapNode pointer
+ * We return:
+ *  char in the mapNode
+ *  NULL char if given node is NULL
+*/
+char maps_getMapNodeItem(mapNode_t* node);
+
+/** maps_getMapNodeType
+ * 
+ * Returns the void* type for a given mapNode
+ * 
+ * Caller provides:
+ *  valid mapNode pointer
+ * We return:
+ *  void* type in the mapNode
+ *  NULL pointer if given node is NULL
+*/
+void* maps_getMapNodeType(mapNode_t* node);
 
 /** maps_getVisiblePoints
  * 
