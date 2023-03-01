@@ -523,14 +523,15 @@ typedef struct player{
 ```c
 player_t* player_new(const char* playerName, const char* ipAddress, int* maxCharacters, int* totalRows, int* totalCollumns);
 void player_delete(player_t* player);
-void player_addGold(player_t* player, int* gold);
+void player_addGold(player_t* player, int gold);
 int player_getGold(player_t* player);
-void player_addSeenMap(player_t* player, int* row, int* collumn);
+void player_addSeenMap(player_t* player, int row, int collumn);
 bool** player_getSeenMap(player_t* player);
-void player_setXPosition(player_t* player, int* xPos);
+void player_setXPosition(player_t* player, int xPos);
 int player_getXPosition(player_t* player);
-void player_setYPosition(player_t* player, int* yPos);
+void player_setYPosition(player_t* player, int yPos);
 int player_getYPosition(player_t* player);
+char* player_getRealName(player_t* player);
 char* player_getIP(player_t* player);
 ```
 
@@ -545,8 +546,6 @@ Allocates memory for a new player object, instantiates values for gold, creates 
 	if player name is not less than max length 
 		truncate length of name given to have no more than maxCharacters
 		set name to truncated name
-	set name as given name
-	allocate memory for real name
 	set realName as name
 	sets ipAddress as ipAddress given
 	set gold to 0
