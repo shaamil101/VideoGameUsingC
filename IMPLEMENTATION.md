@@ -509,23 +509,22 @@ The player data stucture to hold the player name, player gold, player visibility
 typedef struct player{
     int x;                        
     int y;                    
-    grid_t* seenGrid;
- 	addr_t IP;                     
-    char realName[MaxNameLength];
-    char letterAsisgned;                      
-    int gold;                      
-    int justCollected;player_t; 
+    bool** seenMap;
+    int gold;
+ 	char* IP;                     
+    char* realName;
 } player_t; 
+
 ```
 
 ### Definition of function prototypes
 
 ```c
-player_t* player_new(const char* playerName, const char* ipAddress, int* maxCharacters, int* totalRows, int* totalCollumns);
+player_t* player_new(const char* playerName, const char* ipAddress, int* maxCharacters, int* totalRows, int* totalCollumns, char letterAssigned);
 void player_delete(player_t* player);
 void player_addGold(player_t* player, int gold);
 int player_getGold(player_t* player);
-void player_addSeenMap(player_t* player, int row, int collumn);
+void player_addSeenMap(player_t* player, int row, int collumn, bool state);
 bool** player_getSeenMap(player_t* player);
 void player_setXPosition(player_t* player, int xPos);
 int player_getXPosition(player_t* player);
