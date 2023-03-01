@@ -1091,14 +1091,14 @@ The player data stucture to hold the player name, player gold, player visibility
 
 ```c
 typedef struct player{
-    int x;                        
-    int y;                    
-    bool** seenMap;
-    int gold;
-    int justCollected;
- 	addr_t IP;      
-    char letterAssigned;               
-    char* realName;
+	int x;                        
+	int y;                    
+	grid_t* seenGrid;
+ 	addr_t IP;                     
+	char realName[MaxNameLength];
+	char letterAsisgned;                      
+	int gold;                      
+	int justCollected;
 } player_t; 
 
 ```
