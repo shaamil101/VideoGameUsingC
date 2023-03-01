@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "maps.h"
 #include "log.h"
 #include "mem.h"
@@ -132,9 +133,27 @@ map_t* maps_new(char* mapTextAddress)
  *  Null if invalid map
  * Caller is responsible for later freeing returned char* memory
 */
-char* maps_basegrid(map_t* map);
+char* maps_basegrid(map_t* map)
+{
+  if (map == NULL) {// validate args
+    log_v("Got NULL map pointer in maps_basegrid");
+    return NULL;
+  }
+  int numrows = maps_getRows(map);
+  int numcols = maps_getCols(map);
+	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
+	char* charptr = mapstring;
+  for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
+    for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
+      *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+    }
+    *(charptr++) = '\n';// 	add a new line to the string (for next row)
+  }
+	*(charptr++) = '\0'; // make last char a terminating null
+	return mapstring; // return the string
+}
 
-/** maps_fullgrid
+/** maps_spectatorgrid
  * 
  * Renders the map into the ascii string to pass to the spectator client
  * with all gold and all players in it
@@ -149,7 +168,32 @@ char* maps_basegrid(map_t* map);
  * Caller is responsible for later freeing returned char* memory 
  * 
 */
-char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
+char* maps_spectatorgrid(map_t* map)
+{
+  if (map == NULL) {// validate args
+    log_v("Got NULL map pointer in maps_basegrid");
+    return NULL;
+  }
+  int numrows = maps_getRows(map);
+  int numcols = maps_getCols(map);
+	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
+	char* charptr = mapstring;
+  for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
+    for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
+      mapNode_t* node = (maps_getMapNode(map, r, c));
+      if (isupper(node->item)) { // if is a player
+        *(charptr++) = node->item;
+      } else if (node->item == '*') { // if it's gold
+        *(charptr++) = node->item;
+      } else { // otherwise print normal
+        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+      }
+    }
+    *(charptr++) = '\n';// 	add a new line to the string (for next row)
+  }
+	*(charptr++) = '\0'; // make last char a terminating null
+	return mapstring; // return the string
+}
 
 /** maps_playergrid
  * 
@@ -167,7 +211,36 @@ char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
  * Caller is responsible for later freeing returned char* memory 
  * 
 */
-char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
+char* maps_playergrid(map_t* map, player_t* player)
+{
+  if (map == NULL) {// validate args
+    log_v("Got NULL map pointer in maps_basegrid");
+    return NULL;
+  }
+  int numrows = maps_getRows(map);
+  int numcols = maps_getCols(map);
+	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
+	char* charptr = mapstring;
+  for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
+    for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
+      mapNode_t* node = (maps_getMapNode(map, r, c));
+      if (isupper(node->item)) { // if is a player
+        if (node->item == player_getLetter(player)) {
+          *(charptr++) = '@'; // if it's the own player
+        } else {
+          *(charptr++) = node->item;
+        }
+      } else if (node->item == '*') { // if it's gold
+        *(charptr++) = node->item;
+      } else { // otherwise print normal
+        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+      }
+    }
+    *(charptr++) = '\n';// 	add a new line to the string (for next row)
+  }
+	*(charptr++) = '\0'; // make last char a terminating null
+	return mapstring; // return the string
+}
 
 /** maps_getRows
  * 
@@ -178,7 +251,14 @@ char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
  * We return: integer number of rows in grid
  * Or 0 if invalid map struct
 */
-int maps_getRows(map_t* map);
+int maps_getRows(map_t* map)
+{
+  if (map == NULL) {
+    log_v("map_getRows: map is NULL");
+    return 0;
+  }
+  return map->numRows;
+}
 
 /** maps_getCols
  * 
@@ -189,7 +269,14 @@ int maps_getRows(map_t* map);
  * We return: integer number of columns in grid
  * Or 0 if invalid map struct
 */
-int maps_getCols(map_t* map);
+int maps_getCols(map_t* map)
+{
+  if (map == NULL) {
+    log_v("map_getCols: map is NULL");
+    return 0;
+  }
+  return map->numCols;
+}
 
 /** maps_getMapNode
  * 
@@ -203,7 +290,20 @@ int maps_getCols(map_t* map);
  *  mapNode pointer at that gridpoint
  *  Null pointer if anything invalid
 */
-mapNode_t* maps_getMapNode(map_t* map, int row, int col);
+mapNode_t* maps_getMapNode(map_t* map, int row, int col)
+{
+  if (map == NULL) {
+    log_v("map_getMapNode: map is NULL");
+    return NULL;
+  } else if (row < 0 || row >= map->numRows) {
+    log_d("map_getMapNode: row # %d is invalid (must be >=0 and less than map numRows)", row);
+    return NULL;
+  } else if (col < 0 || col >= map->numCols) {
+    log_d("map_getMapNode: col # %d is invalid (must be >=0 and less than map numCols)", col);
+    return NULL;
+  }
+  return map->grid[row][col];
+}
 
 /** maps_getMapNodeItem
  * 
@@ -215,7 +315,14 @@ mapNode_t* maps_getMapNode(map_t* map, int row, int col);
  *  char in the mapNode
  *  NULL char if given node is NULL
 */
-char maps_getMapNodeItem(mapNode_t* node);
+char maps_getMapNodeItem(mapNode_t* node)
+{
+  if (node == NULL) {
+    log_v("map_getMapNodeItem: mapNode is NULL");
+    return '\0';
+  }
+  return node->item;
+}
 
 /** maps_getMapNodeType
  * 
@@ -227,7 +334,14 @@ char maps_getMapNodeItem(mapNode_t* node);
  *  void* type in the mapNode
  *  NULL pointer if given node is NULL
 */
-void* maps_getMapNodeType(mapNode_t* node);
+void* maps_getMapNodeType(mapNode_t* node)
+{
+  if (node == NULL) {
+    log_v("map_getMapNodeType: mapNode is NULL");
+    return NULL;
+  }
+  return node->type;
+}
 
 /** maps_setMapNodeItem
  * 
@@ -237,7 +351,14 @@ void* maps_getMapNodeType(mapNode_t* node);
  *  valid mapNode pointer
  *  char in the mapNode
 */
-void maps_setMapNodeItem(mapNode_t* node, char item);
+void maps_setMapNodeItem(mapNode_t* node, char item)
+{
+  if (node == NULL) {
+    log_v("map_setMapNodeItem: mapNode is NULL");
+    return;
+  }
+  node->item = item;
+}
 
 /** maps_getMapNodeType
  * 
@@ -247,7 +368,14 @@ void maps_setMapNodeItem(mapNode_t* node, char item);
  *  valid mapNode pointer
  *  valid void* type in the mapNode (player or gold)
 */
-void maps_setMapNodeType(mapNode_t* node, void* type);
+void maps_setMapNodeType(mapNode_t* node, void* type)
+{
+  if (node == NULL) {
+    log_v("map_setMapNodeType: mapNode is NULL");
+    return;
+  }
+  node->type = type;
+}
 
 /** maps_getVisiblePoints
  * 
