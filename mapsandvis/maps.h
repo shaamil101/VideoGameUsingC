@@ -53,22 +53,20 @@ map_t* maps_new(char* mapTextAddress);
 */
 char* maps_basegrid(map_t* map);
 
-/** maps_fullgrid
+/** maps_spectatorgrid
  * 
  * Renders the map into the ascii string to pass to the spectator client
  * with all gold and all players in it
  * 
  *Caller provides:
  *  valid map pointer
- *  valid list of player pointers
- *  valid list of gold pointers
  * We return: a string that's the ascii-rendered map with each row
  *  separated by new line, and null terminated for entire overlaid grid
  *  Null if invalid map
  * Caller is responsible for later freeing returned char* memory 
  * 
 */
-char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
+char* maps_spectatorgrid(map_t* map);
 
 /** maps_playergrid
  * 
@@ -78,15 +76,13 @@ char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
  *Caller provides:
  *  valid map pointer
  *  valid player pointer
- *  valid list of player pointers
- *  valid list of gold pointers
  * We return: a string that's the ascii-rendered map with each row
  *  separated by new line, and null terminated for player-visible overlaid grid
  *  Null if invalid map
  * Caller is responsible for later freeing returned char* memory 
  * 
 */
-char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
+char* maps_playergrid(map_t* map, PLAYER_T* player);
 
 /** maps_getRows
  * 
@@ -123,6 +119,18 @@ int maps_getCols(map_t* map);
  *  Null char if anything invalid
 */
 char maps_getGridpoint(map_t* map, int row, int col);
+
+/** maps_isVisible
+ * 
+ * Returns a boolean value of whether or not a position is visible at another position
+ * 
+ * Caller provides:
+ *  a valid matrixIndex pointer for player position
+ *  a valid matrixIndex pointer for test position
+ * We return
+ *  bool for whether it's visible at that
+*/
+bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
 
 /** maps_getVisiblePoints
  * 

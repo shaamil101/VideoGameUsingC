@@ -15,13 +15,19 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "maps.h"
 #include "log.h"
 #include "mem.h"
 #include "file.h"
 
+typedef struct mapNode{
+  char item;
+  void* type;
+} mapNode_t;
+
 typedef struct map{
-  char** grid;
+  mapNode_t*** grid; //2d array of mapNode_t pointers
 	int numRows;
 	int numCols;
 } map_t;
@@ -36,7 +42,7 @@ typedef struct matrixIndex {
  * Takes in a mapTextAddress (the char* filepath to a map.txt file),
  * allocates memory for a new map struct
  * verifies and then reads the file and parses
- * it into a 2d array of characters.
+ * it into a 2d array of mapNode structs.
  * Memory allocated for this must later be freed
  * with `maps_delete`
  * 
@@ -50,7 +56,7 @@ map_t* maps_new(char* mapTextAddress)
 {
   log_init(stderr);
   if (mapTextAddress == NULL) { // validate args
-    log("Text map passed to maps_new is NULL");
+    log_v("Text map passed to maps_new is NULL");
     return NULL;
   }
   FILE* fp;
@@ -84,7 +90,7 @@ map_t* maps_new(char* mapTextAddress)
   (*map).numCols = numcols;// set row and column numbers of map struct
   (*map).numRows = numrows;
 
-	char (*grid) [numrows] = malloc( sizeof(char[numrows][numcols]) ); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
+	mapNode_t* (*grid) [numrows] = malloc( sizeof(mapNode_t*[numrows][numcols]) ); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
 	
   scanpointer = fileline;
   int row_idx = 0;
@@ -99,12 +105,17 @@ map_t* maps_new(char* mapTextAddress)
     if (scanpointer != ' ' || scanpointer != '-' || scanpointer != '|' || scanpointer != '+' || scanpointer != '.' || scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
      log_s("Text map %s had an invalid character", mapTextAddress); 
     }
-    grid[row_idx][col_idx] = scanpointer; // copy into the grid
+    mapNode_t* mapNode = mapNodeNew(scanpointer);
+    if (mapNode == NULL) {
+      log_v("Expected valid mapNode* but got NULL instead");
+      return NULL;
+    }
+    grid[row_idx][col_idx] = mapNode; // copy into the grid
     scanpointer++;
   }
-  
-	// 	add the char to the matrix under that row,col count
-	// return the map struct
+  map->grid = grid; // set the map grid 
+
+	return map;// return the map struct
 }
 
 
@@ -267,3 +278,25 @@ bool maps_compareMatrixIndex(matrixIndex_t* indexA, matrixIndex_t* indexB);
  *  the matrixIndex is freed from memory
 */
 void maps_deleteMatrixIndex(matrixIndex_t* index);
+
+/** mapNodeNew
+ * 
+ * Creates a new mapNode structure and returns its pointer
+*/
+mapNode_t* mapNodeNew(char item)
+{
+  // fine if item is NULL, no need to check
+  mapNode_t* node = mem_malloc_assert(sizeof(mapNode_t), "Unable to allocate memory for mapnode struct\n");
+  node->item = item;
+  return node;
+}
+
+void mapNodeDelete(mapNode_t* node)
+{
+  if (node == NULL) {
+    log_v("mapNodeDelete: tried to delete NULL node!");
+    return;
+  }
+  free(node);
+  // don't delete item because it's either a gold pile or a player, server will free those
+}
