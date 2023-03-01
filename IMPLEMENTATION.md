@@ -399,7 +399,7 @@ char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
 int maps_getRows(map_t* map);
 int maps_getCols(map_t* map);
 char maps_getGridpoint(map_t* map, int row, int col);
-static bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
+bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
 matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
 matrixIndex_t* maps_getRandomGridpoint(map_t* map);
 void maps_delete(map_t* map);
@@ -525,7 +525,7 @@ Returns the char at the row, column index of a given map grid
 	return char at that index
 
 #### isVisible
-`isVisible` is a private-to-the-module (static) method that returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
+`isVisible` returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
 
 	validate args
 		make sure both points row and column values are equal to or less than the map row and column (and non-negative)
@@ -636,14 +636,14 @@ The player data stucture to hold the player name, player gold, player visibility
 
 ```c
 typedef struct player{
-    int x;                        
-    int y;                    
-    grid_t* seenGrid;
+	int x;                        
+	int y;                    
+	grid_t* seenGrid;
  	addr_t IP;                     
-    char realName[MaxNameLength];
-    char letterAsisgned;                      
-    int gold;                      
-    int justCollected;player_t; 
+	char realName[MaxNameLength];
+	char letterAsisgned;                      
+	int gold;                      
+	int justCollected;
 } player_t; 
 ```
 
