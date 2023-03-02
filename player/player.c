@@ -12,6 +12,7 @@
 #include <player.h>
 #include <mem.h>
 #include <../support/message.h>
+#include <map.h>
 
 typedef struct player{
     int x;                        
@@ -24,8 +25,8 @@ typedef struct player{
     char* realName;
 } player_t; 
 
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
-    if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
+player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, map_t map, char letterAssigned){
+    if (playerName && maxCharacters && map_getRows(map) && map_getCols(map)){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
             char* newName;
@@ -40,7 +41,7 @@ player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
-        playerNew->seenMap = mem_malloc((totalRows*totalCollumns)*sizeof(bool));
+        playerNew->seenMap = mem_malloc((map_getRows(map) * map_getCols(map))*sizeof(bool));
         playerNew->x = NULL; 
         playerNew->y = NULL; 
         return playerNew;
@@ -81,9 +82,9 @@ int player_getJustCollected(player_t* player){
     return NULL;
 }
 
-void player_addSeenMap(player_t* player, int row, int collumn, bool state){
+void player_addSeenMap(player_t* player, int collumn, int row, bool state, map_t map){
     if (player){//null check
-        if ((0 <= player->x <= maxCollumns) && (0 <= player->y <= maxRows)){
+        if ((0 <= player->x <= map_getCols(map)) && (0 <= player->y <= map_getRows(map))){
             bool temp = player->seenMap[collumn][row];
             temp = state;
         }
@@ -97,9 +98,9 @@ bool** player_getSeenMap(player_t* player){
     return NULL;
 }
 
-void player_setXPosition(player_t* player, int xPos){
+void player_setXPosition(player_t* player, int xPos, map_t map){
     if (player){
-        if (0 <= xPos <= maxCollumns){
+        if (0 <= xPos <= map_getCols(map)){
             player->x = xPos;
         }
     }
@@ -113,9 +114,9 @@ int player_getXPosition(player_t* player){
     return NULL;
 }
 
-void player_setYPosition(player_t* player, int yPos){
+void player_setYPosition(player_t* player, int yPos, map_t map){
     if (player){
-        if (0 <= yPos <= maxRows){
+        if (0 <= yPos <= map_getRows(map)){
             player->y = yPos;
         }
     }
