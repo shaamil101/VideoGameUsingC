@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <player.h>
 #include <mem.h>
-#include <../support/message.h>
+#include <message.h>
 
 typedef struct player{
     int x;                        

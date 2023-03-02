@@ -6,15 +6,17 @@
 # object files, and the target library
 OBJS = maps.o
 LIBS = -lm
-PLAYERLIB = ../player/player.h
-CFLAGS = -Wall -pedantic -std=c11 -ggdb $(LIBS) -I$(PLAYERLIB) $(FLAGS)
+LLIBS = ../libcs50/libcs50-given.a  ../support/support.a
+PLAYERLIB = ../player
+SUPPORTLIB = ../support
+CFLAGS = -Wall -pedantic -std=c11 -ggdb $(LIBS) $(FLAGS)
 CC = gcc
 MAKE = make
 
 .PHONY: all test clean
 
 all: $(OBJS)
-	$(CC) $(OBJS) $(CFLAGS) -o maps
+	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) -I$(PLAYERLIB) -o maps
 
 # Dependencies: object files depend on header files
 maps.o: maps.h

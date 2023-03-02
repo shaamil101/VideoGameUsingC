@@ -60,24 +60,24 @@ map_t* maps_new(char* mapTextAddress)
     return NULL;
   }
   FILE* fp;
-  if ((fp = fopen(mapTextAddress, 'r')) == NULL) { // verify mapTextAddress is a readable file (in requirements we are allowed to assume it is a valid map)
+  if ((fp = fopen(mapTextAddress, "r")) == NULL) { // verify mapTextAddress is a readable file (in requirements we are allowed to assume it is a valid map)
     log_s("Text map %s could not be read", mapTextAddress);
     return NULL;
   }
   map_t* map = mem_malloc_assert(sizeof(map_t), "maps.c: maps_new: could not allocate memory for new map struct");// allocate memory for a map struct, still unkown number of rows and columns for grid
 	char* fileline = file_readFile(fp); // read the file into one character buffer, need to free later
-  if (fileline = NULL) {
+  if (fileline == NULL) {
     log_s("Text map %s could not be scanned", mapTextAddress);
   }
   fclose(fp);
   char* scanpointer = fileline; // for scanning through file
   int numrows = 0;
   int numcols = 0;
-  while (scanpointer != '\n' || scanpointer != NULL) { // pass through first line to get number of columns
+  while (*scanpointer != '\n' || *scanpointer != '\0') { // pass through first line to get number of columns
     numcols++;
     scanpointer++;
   }
-  while (scanpointer != NULL) { // keep passing through, counting number of new lines = num rows
+  while (*scanpointer != '\0') { // keep passing through, counting number of new lines = num rows
     if (scanpointer == '\n') {
       numrows++;
     }
@@ -102,7 +102,7 @@ map_t* maps_new(char* mapTextAddress)
       scanpointer++;
       continue;
     }
-    if (scanpointer != ' ' || scanpointer != '-' || scanpointer != '|' || scanpointer != '+' || scanpointer != '.' || scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
+    if (*scanpointer != ' ' || *scanpointer != '-' || *scanpointer != '|' || *scanpointer != '+' || *scanpointer != '.' || *scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
      log_s("Text map %s had an invalid character", mapTextAddress); 
     }
     mapNode_t* mapNode = mapNodeNew(scanpointer);
@@ -367,6 +367,7 @@ bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCo
     }
     return true; // return true if we make it to the end
   }
+  return false; // if error and slips through cracks of if-clauses
 }
 
 

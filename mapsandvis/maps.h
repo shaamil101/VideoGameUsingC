@@ -14,14 +14,12 @@
  * 
 */
 
+#include <stdlib.h>
 #include "player.h"
 
 typedef struct map map_t;
 
-typedef struct matrixIndex {
-  int row;
-  int col;
-} matrixIndex_t;
+typedef struct mapNode mapNode_t;
 
 /** maps_new 
  * 
@@ -200,3 +198,11 @@ int maps_getTotalGoldLeft(map_t* map);
  *  the map struct and all underlying structs are freed from memory
 */
 void maps_delete(map_t* map);
+
+/** mapNodeNew
+ * 
+ * Creates a new mapNode structure and returns its pointer
+*/
+mapNode_t* mapNodeNew(char item);
+
+void mapNodeDelete(mapNode_t* node);

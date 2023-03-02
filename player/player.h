@@ -6,6 +6,7 @@
 * CS 50, Winter 2023, Nuggets Game
 */
 
+#include "message.h"
 
 typedef struct player player_t;
 
