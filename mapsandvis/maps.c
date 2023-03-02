@@ -37,11 +37,6 @@ typedef struct map{
   int totalGoldLeft;
 } map_t;
 
-typedef struct matrixIndex {
-  int row;
-  int col;
-} matrixIndex_t;
-
 /** maps_new 
  * 
  * Takes in a mapTextAddress (the char* filepath to a map.txt file),
