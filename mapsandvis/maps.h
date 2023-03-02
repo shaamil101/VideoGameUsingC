@@ -82,7 +82,7 @@ char* maps_spectatorgrid(map_t* map);
  * Caller is responsible for later freeing returned char* memory 
  * 
 */
-char* maps_playergrid(map_t* map, PLAYER_T* player);
+char* maps_playergrid(map_t* map, player_t* player);
 
 /** maps_getRows
  * 
@@ -174,33 +174,7 @@ void maps_setMapNodeType(mapNode_t* node, void* type);
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
-
-/** maps_getVisiblePoints
- * 
- * Returns a list of visible matrixIndices from a given player's position
- * 
- * Caller provides:
- *  valid map pointer
- *  valid player pointer
- * We return:
- *  null-terminated pointer list of matrixIndex pointers
- *  Null if invalid
- * Caller is responsible for later freeing pointer list
-*/
-matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
-
-/** maps_getRandomGridpoint
- * 
- * Returns a random empty room point on a given map
- * 
- * Caller provides
- *  valid map pointer
- * We return
- *  matrixIndex pointer to an empty-room point for that map
- * Caller is responsible for later freeing matrixIndex pointer
-*/
-matrixIndex_t* maps_getRandomGridpoint(map_t* map);
+bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
 
 /** maps_setTotalGoldLeft
  * 
@@ -224,41 +198,3 @@ int maps_getTotalGoldLeft(map_t* map);
  *  the map struct and all underlying structs are freed from memory
 */
 void maps_delete(map_t* map);
-
-/** maps_newMatrixIndex
- * 
- * Creates a new matrixIndex struct with a row and col
- * 
- * Caller provides:
- *  int row that is 0 or greater
- *  int col that is 0 or greater
- * We return
- *  matrixIndex pointer
- *  or NULL if memory allocation issues
- * Caller is responsible for later freeing this struct with maps_deleteMatrixIndex
-*/
-matrixIndex_t* maps_newMatrixIndex(int row, int col);
-
-/** maps_compareMatrixIndex
- * 
- * Compares whether or not two matrix indices are the same
- * 
- * Caller provides:
- *  valid matrixIndex pointer A
- *  valid matrixIndex pointer B
- * We return:
- *  boolean value for if A and B are the same index
- *  (false if invalid args)
- */
-bool maps_compareMatrixIndex(matrixIndex_t* indexA, matrixIndex_t* indexB);
-
-/** maps_deleteMatrixIndex
- * 
- * Frees the matrixIndex struct from memory
- * 
- * Caller provides:
- *  valid matrixIndex pointer
- * We guarantee
- *  the matrixIndex is freed from memory
-*/
-void maps_deleteMatrixIndex(matrixIndex_t* index);

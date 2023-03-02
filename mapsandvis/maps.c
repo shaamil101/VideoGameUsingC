@@ -25,6 +25,7 @@
 typedef struct mapNode{
   char item;
   void* type;
+  bool isTransparent;
 } mapNode_t;
 
 typedef struct map{
@@ -181,8 +182,9 @@ char* maps_spectatorgrid(map_t* map)
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
       mapNode_t* node = (maps_getMapNode(map, r, c));
-      if (isupper(node->item)) { // if is a player
-        *(charptr++) = node->item;
+      if (node->item == '@') { // if is a player
+        player_t* player = (player_t*)(map->grid[r][c]->type);
+        *(charptr++) = player_getLetterAssigned(player);
       } else if (node->item == '*') { // if it's gold
         *(charptr++) = node->item;
       } else { // otherwise print normal
@@ -214,26 +216,44 @@ char* maps_spectatorgrid(map_t* map)
 char* maps_playergrid(map_t* map, player_t* player)
 {
   if (map == NULL) {// validate args
-    log_v("Got NULL map pointer in maps_basegrid");
+    log_v("Got NULL map pointer in maps_playergrid");
+    return NULL;
+  } else if (player == NULL) {
+    log_v("Got NULL player pointer in maps_playergrid");
     return NULL;
   }
   int numrows = maps_getRows(map);
   int numcols = maps_getCols(map);
-	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
+	char* mapstring = mem_calloc_assert((numrows)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
 	char* charptr = mapstring;
+  bool** seenMap = player_getSeenMap(player);
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
-      mapNode_t* node = (maps_getMapNode(map, r, c));
-      if (isupper(node->item)) { // if is a player
-        if (node->item == player_getLetter(player)) {
-          *(charptr++) = '@'; // if it's the own player
+      if (seenMap[r][c]) { // if the player has seen the point before
+        mapNode_t* node = (maps_getMapNode(map, r, c));
+        if (node != NULL) { // NULL check for node
+          if (isVisible(map, player_getYPosition(player), player_getXPosition(player), r, c)) { // if currently visible to player
+            if (node->item == '@') { // if is a player
+              player_t* playerAtPoint = (player_t*)(map->grid[r][c]->type);
+              if (player_getLetterAssigned(playerAtPoint) == player_getLetterAssigned(player)) {
+                *(charptr++) = '@'; // if it's the own player
+              } else {
+                *(charptr++) = player_getLetterAssigned(playerAtPoint); // if it's another player
+              }
+            } else if (node->item == '*') { // if it's gold
+              *(charptr++) = node->item;
+            } else { // otherwise print normal
+              *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+            }
+          } else { // not currently visible to player
+            *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+          }
         } else {
-          *(charptr++) = node->item;
+          log_v("maps_playergrid: got NULL mapNode in the map");
+          *(charptr++) = ' ';
         }
-      } else if (node->item == '*') { // if it's gold
-        *(charptr++) = node->item;
-      } else { // otherwise print normal
-        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+      } else { // player hasn't seen the point, render as emtpy
+        *(charptr++) = ' ';
       }
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
@@ -241,6 +261,123 @@ char* maps_playergrid(map_t* map, player_t* player)
 	*(charptr++) = '\0'; // make last char a terminating null
 	return mapstring; // return the string
 }
+
+/** maps_isVisible
+ * 
+ * Returns a boolean value of whether or not a position is visible at another position
+ * 
+ * Caller provides:
+ *  a valid int for player row 
+ *    and column
+ *  a valid int for test row
+ *    and column
+ * We return
+ *  bool for whether it's visible at that
+*/
+bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+{
+  if (map == NULL) { // validate args
+    log_v("isVisible: received NULL map pointer");
+    return false;
+  }
+  int numRows = map->numRows;
+  int numCols = map->numCols;
+  if (playerRow < 0 || playerRow >= numRows) { // 	make sure both points row and column values are equal to or less than the map row and column (and non-negative)
+    log_d("isVisible: playerRow %d is out of bounds", playerRow);
+    return false;
+  } else if (playerCol < 0 || playerCol >= numCols) {
+    log_d("isVisible: playerCol %d is out of bounds", playerCol);
+    return false;
+  } else if (testRow < 0 || testRow >= numRows) {
+    log_d("isVisible: testRow %d is out of bounds", testRow);
+    return false;
+  } else if (testCol < 0 || testCol >= numCols) {
+    log_d("isVisible: testCol %d is out of bounds", testCol);
+    return false;
+  }
+
+	// switch through 6 cases: vertical down line (change in columns is 0, change in rows is positive), vertical up line (change in columsn is 0, change in rows is negative), horizontal right line (change in rows is 0, change in columns is positive), horizontal left line (change in rows is 0, change in columns is negative), sloped right line (non-zero change in rows and columns, but change in columns is positive), sloped left line case (non-zero change in rows and columns, but change in columns is negative)
+	
+  int changeInCols = testCol - playerCol;
+  int changeInRows = testRow - playerRow;
+
+  if (changeInCols == 0 && changeInRows > 0) { // vertical down line case: (change in columns is 0, change in rows is positive)
+    for (int row = playerRow; row < testRow; row++) {
+      if (!map->grid[row][playerCol]->isTransparent) {
+        return false;
+      }
+    }
+    return true;
+  } else if (changeInCols == 0 && changeInRows < 0) { //vertical up line (change in columsn is 0, change in rows is negative)
+
+  } else if (changeInRows == 0 && changeInCols > 0) { // horizontal right line (change in rows is 0, change in columns is positive)
+
+  } else if (changeInRows == 0 && changeInCols < 0) { // horizontal left line (change in rows is 0, change in columns is negative)
+
+  } else if (changeInCols > 0) { // sloped right line (non-zero change in rows and columns, but change in columns is positive)
+
+  } else if (changeInCols < 0) { // sloped left line case (non-zero change in rows and columns, but change in columns is negative)
+
+  }
+
+  // vertical down line case: (change in columns is 0, change in rows is positive)
+	// 	get row difference between player and test point
+	// 	for each gridpoint along the row (player position incremented by (1 to testpoint]
+	// 		if gridpoint is opaque character (not room space '.')
+	// 		return false
+	// 	return true (we've made it to the end of the line segement)
+
+	// vertical up line case:
+	// 	get row difference between player and test point
+	// 	for each gridpoint along the row (player position decremented by (1 to testpoint]
+	// 		if gridpoint is opaque character (not room space '.')
+	// 		return false
+	// 	return true (we've made it to the end of the line segement)
+
+	// horizontal right line case:
+	// 	get column difference between player and test point
+	// 	for each gridpoint along the row (player position incremented by (1 to testpoint]
+	// 		if gridpoint is opaque character (not room space '.')
+	// 		return false
+	// 	return true (we've made it to the end of the line segement)
+
+	// horizontal left line case:
+	// 	get column difference between player and test point
+	// 	for each gridpoint along the row (player position decremented by (1 to testpoint]
+	// 		if gridpoint is opaque character (not room space '.')
+	// 		return false
+	// 	return true (we've made it to the end of the line segement)
+
+	// sloped right line case:
+	// 	get the (float) slope of the line from player point to test point (change in rows divided by change in columns)
+	// 	get column difference 
+	// 	for each column between the player and test position (increment by 1 each time to go right)
+	// 		get the (float) row value of the line by doing (player_point + (change in column index * slope))
+	// 		if float is an integer:
+	// 			if gridpoint is opaque character
+	// 				return false
+	// 		else:
+	// 			with the integer row value rounded up and the integer row value rounded down,
+	// 			if both are an opaque character
+	// 				return false
+	// 	return true (we've made it to the end of the line segement)
+
+	// sloped left line case:
+	// 	get the (float) slope of the line from the player point to test point
+	// 	get column difference
+	// 	for each column between the player and test position (decrement by 1 each time to go left)
+	// 		get the (float) row value of the line by doing (player_point + (change in column index * slope))
+	// 		if float is an integer:
+	// 			if gridpoint is opaque character
+	// 				return false
+	// 		else:
+	// 			with the integer row value rounded up and the integer row value rounded down,
+	// 			if both are an opaque character
+	// 				return false
+	// 	return true (we've made it to the end of the line segement)
+  
+}
+
 
 /** maps_getRows
  * 
@@ -377,32 +514,6 @@ void maps_setMapNodeType(mapNode_t* node, void* type)
   node->type = type;
 }
 
-/** maps_getVisiblePoints
- * 
- * Returns a list of visible matrixIndices from a given player's position
- * 
- * Caller provides:
- *  valid map pointer
- *  valid player pointer
- * We return:
- *  null-terminated pointer list of matrixIndex pointers
- *  Null if invalid
- * Caller is responsible for later freeing pointer list
-*/
-matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
-
-/** maps_getRandomGridpoint
- * 
- * Returns a random empty room point on a given map
- * 
- * Caller provides
- *  valid map pointer
- * We return
- *  matrixIndex pointer to an empty-room point for that map
- * Caller is responsible for later freeing matrixIndex pointer
-*/
-matrixIndex_t* maps_getRandomGridpoint(map_t* map);
-
 /** maps_setTotalGoldLeft
  * 
  * Sets the integer total gold left in a map
@@ -426,53 +537,16 @@ int maps_getTotalGoldLeft(map_t* map);
 */
 void maps_delete(map_t* map);
 
-/** maps_newMatrixIndex
- * 
- * Creates a new matrixIndex struct with a row and col
- * 
- * Caller provides:
- *  int row that is 0 or greater
- *  int col that is 0 or greater
- * We return
- *  matrixIndex pointer
- *  or NULL if memory allocation issues
- * Caller is responsible for later freeing this struct with maps_deleteMatrixIndex
-*/
-matrixIndex_t* maps_newMatrixIndex(int row, int col);
-
-/** maps_compareMatrixIndex
- * 
- * Compares whether or not two matrix indices are the same
- * 
- * Caller provides:
- *  valid matrixIndex pointer A
- *  valid matrixIndex pointer B
- * We return:
- *  boolean value for if A and B are the same index
- *  (false if invalid args)
- */
-bool maps_compareMatrixIndex(matrixIndex_t* indexA, matrixIndex_t* indexB);
-
-/** maps_deleteMatrixIndex
- * 
- * Frees the matrixIndex struct from memory
- * 
- * Caller provides:
- *  valid matrixIndex pointer
- * We guarantee
- *  the matrixIndex is freed from memory
-*/
-void maps_deleteMatrixIndex(matrixIndex_t* index);
-
 /** mapNodeNew
  * 
  * Creates a new mapNode structure and returns its pointer
 */
 mapNode_t* mapNodeNew(char item)
 {
-  // fine if item is NULL, no need to check
+  // fine if item is NULsL, no need to check
   mapNode_t* node = mem_malloc_assert(sizeof(mapNode_t), "Unable to allocate memory for mapnode struct\n");
   node->item = item;
+  node->isTransparent = (item == '.');
   return node;
 }
 
