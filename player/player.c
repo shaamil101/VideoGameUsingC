@@ -11,19 +11,21 @@
 #include <stdlib.h>
 #include <player.h>
 #include <mem.h>
+#include <../support/message.h>
 
 typedef struct player{
     int x;                        
     int y;                    
     bool** seenMap;
     int gold;
+    int justCollected;
  	addr_t IP;      
     char letterAssigned;               
     char* realName;
 } player_t; 
 
-player_t* player_new(const char* playerName, const char* ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
-    if (playerName && ipAddress && maxCharacters && totalRows && totalCollumns){ //null check 
+player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
+    if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
             char* newName;
@@ -37,6 +39,7 @@ player_t* player_new(const char* playerName, const char* ipAddress, int maxChara
         playerNew->realName = playerName;
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
+        playerNew->justCollected = 0;
         playerNew->seenMap = mem_malloc((totalRows*totalCollumns)*sizeof(bool));
         playerNew->x = NULL; 
         playerNew->y = NULL; 
@@ -57,6 +60,7 @@ void player_delete(player_t* player){
 void player_addGold(player_t* player, int gold){
     if (player){ //null check 
         if (gold > 0){
+            player->justCollected = gold;
             player->gold = player->gold + gold;
         }
         return;
@@ -66,6 +70,13 @@ void player_addGold(player_t* player, int gold){
 int player_getGold(player_t* player){
     if (player){ //null check 
             return player->gold;
+    }
+    return NULL;
+}
+
+int player_getJustCollected(player_t* player){
+    if (player){ //null check 
+            return player->justCollected;
     }
     return NULL;
 }
