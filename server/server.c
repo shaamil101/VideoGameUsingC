@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-#include "map.h"
+#include <stdbool.h>
+#include <string.h>
+#include "support/message.h"
+#include "support/log.h"
+#include <ctype.h>
+#include <unistd.h>
 #include "memory.h"
 
 static const int MaxNameLength = 50;   // max number of chars in playerName
@@ -9,6 +15,46 @@ static const int MaxPlayers = 26;      // maximum number of players
 static const int GoldTotal = 250;      // amount of gold in the game
 static const int GoldMinNumPiles = 10; // minimum number of gold piles
 static const int GoldMaxNumPiles = 30; // maximum number of gold piles
+
+void server_dropGold(map_t *map, int num_piles, int gold_amount);
+bool handleMessage(void *arg, const addr_t from, const char *message);
+gold_pile_t *new_gold_pile(int size);
+void delete_gold_pile(gold_pile_t *pile);
+void playerTable_delete(playerTable_t *playerTable);
+spec_t *spectator_new(addr_t address);
+playerTable_t *playerTable_new();
+game_t *gamenode_new(int num_nuggets, map_t *curr_map);
+void send_player_display(game_t *game, player_t *player, addr_t from);
+void send_player_gold(game_t *game, player_t *player, addr_t from);
+void send_spectator_gold(game_t *game, addr_t from);
+char *createGoldMessage(map_t *map, player_t *player);
+player_t *player_set(map_t *map, player_t *player);
+char *getCharacterBasedOnIndex(int i);
+void move_left(map_t *map, player_t *player);
+void move_right(map_t *map, player_t *player);
+void move_up(map_t *map, player_t *player);
+void move_down(map_t *map, player_t *player);
+void move_diag_down_right(map_t *map, player_t *player);
+void move_diag_down_left(map_t *map, player_t *player);
+void move_diag_up_right(map_t *map, player_t *player);
+void move_diag_up_left(map_t *map, player_t *player);
+void move_diag_up_right_MAX(map_t *map, player_t *player);
+void move_diag_up_left_MAX(map_t *map, player_t *player);
+void move_diag_down_right_MAX(map_t *map, player_t *player);
+void move_diag_down_left_MAX(map_t *map, player_t *player);
+void move_up_MAX(map_t *map, player_t *player);
+void move_right_MAX(map_t *map, player_t *player);
+void move_left_MAX(map_t *map, player_t *player);
+void move_down_MAX(map_t *map, player_t *player);
+bool moveable(mapnode_t *node);
+void server_dropPlayer(map_t *map, player_t *player);
+void player_move(map_t *map, player_t *player, int new_x, int new_y);
+char *game_over_summary();
+player_t *searchByAddress(addr_t from);
+bool isNumber(char number[]);
+void free_everything(game_t *game);
+void make_visible(player_t *player, map_t *map);
+void send_spectator_display(game_t *game, addr_t from);
 
 /* A data structure which holds the player, their address, and their letter */
 typedef struct playerNode
@@ -19,7 +65,7 @@ typedef struct playerNode
 } playerNode_t;
 
 /* A data structure which holds the player, their address, and their letter */
-playerNode _t *playerNode_new()
+playerNode_t *playerNode_new()
 {
         playerNode_t *playerNode = malloc(sizeof(playerNode_t));
         return playerNode;
@@ -322,7 +368,7 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
       {
         if (maps_getMapNode(map, i, j) != NULL)
         {
-          if ( maps_getMapNodeItem(maps_getMapNode(map, i, j),item) == '.')
+          if ( maps_getMapNodeItem(maps_getMapNode(map, i, j)) == '.')
           {
             if (space == gold_location)
             {
@@ -399,7 +445,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 // Create new player
                 player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getRows, maps_getCols, '@');
-                newPlayer = player_set(game->map, newplayer);
+                newPlayer = player_set(game->map, newPlayer);
 
                 // Add the player to the game struct array
                 server_dropPlayer(game->map, newPlayer);
@@ -660,6 +706,41 @@ void send_player_gold(game_t *game, player_t *player, addr_t from)
         free(goldmessage);
 }
 
+/* Send the spectator a display message  */
+void send_spectator_display(game_t *game, addr_t from)
+{
+        // create the grid string and determine the size
+        char *mapstring = maps_spectatorgrid(game->map);
+        int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
+        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
+
+        // begin sending the message
+        strcpy(DISPLAYMESSAGE, "DISPLAY\n");
+        strcat(DISPLAYMESSAGE, mapstring);
+        message_send(from, DISPLAYMESSAGE);
+
+        // free
+        free(mapstring);
+        free(DISPLAYMESSAGE);
+}
+
+/* Send the spectator a gold message  */
+void send_spectator_gold(game_t *game, addr_t from)
+{
+        // create the grid string and determine the size
+        int len = strlen("GOLD ") + 15 + 1;
+        char *goldmessage_spectator = calloc(len, sizeof(char));
+
+        // determine gold comp
+        int n = 0;
+        int p = 0;
+        int r = maps_getTotalGoldLeft(game->map);
+
+        // send and free
+        sprintf(goldmessage_spectator, "GOLD %d %d %d", n, p, r);
+        message_send(from, goldmessage_spectator);
+        free(goldmessage_spectator);
+}
 /**************** createGoldMessage ****************/
 char *createGoldMessage(map_t *map, player_t *player)
 {
@@ -1046,13 +1127,15 @@ void make_visible(player_t *player, map_t *map)
   {
     for (int y = 0; y < maps_getCols(map); y++)
     {
-      if (!(player_getSeenMap(player)[x][y]))
+      bool** seen = player_getSeenMap(player);
+      if (!(seen[x][y]))
       {
         if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
         {
           player_addSeenMap(player,x,y,true);
         }
       }
+      free(seen);
     }
   }
 }
