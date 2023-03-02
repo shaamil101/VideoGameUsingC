@@ -28,7 +28,7 @@ playerNode _t *playerNode_new()
 /* A data structure which holds all of the players */
 typedef struct playerTable
 {
-        playerNode_t *arr[26];
+        playerNode_t *arr[MaxPlayers];
 } playerTable_t;
 
 typedef struct spectator
@@ -88,7 +88,7 @@ spec_t *spectator_new(addr_t address)
 playerTable_t *playerTable_new()
 {
         playerTable_t *playerTable = malloc(sizeof(playerTable_t));
-        for (int i = 0; i < 26; i++)
+        for (int i = 0; i < MaxPlayers; i++)
         {
                 playerTable->arr[i] = NULL;
         }
@@ -98,7 +98,7 @@ playerTable_t *playerTable_new()
 /* Deletes everything in the player table */
 void playerTable_delete(playerTable_t *playerTable)
 {
-        for (int i = 0; i < 26; i++)
+        for (int i = 0; i < MaxPlayers; i++)
         {
                 // loop through everything in the array
                 if (playerTable->arr[i] != NULL)
@@ -215,10 +215,7 @@ int main(int argc, char *argv[])
 
 
         // // Initialize and load the map
-        map_t *curr_map = maps_new();
-
-        // Load the map and check that the file is readable
-        load_map(curr_map, map_pathname);
+        map_t *curr_map = maps_new(map_pathname);
         free(map_pathname);
         server_dropGold(curr_map, num_nuggets, GoldTotal);
 
@@ -265,17 +262,19 @@ int main(int argc, char *argv[])
 void server_dropGold(map_t *map, int num_piles, int gold_amount)
 {
 
-  map->goldleft = gold_amount;
-
+  maps_setTotalGoldLeft(map,gold_amount);
+  int numOfRows = maps_getRows(map);
+  int numOfColumns = maps_getCols(map);
+  
   //Counting the amount of open spaces where gold can go
   int open_spaces = 0;
-  for (int i = 0; i < 300; i++)
+  for (int i = 0; i < numOfRows; i++)
   {
-    for (int j = 0; j < 300; j++)
+    for (int j = 0; j < numOfColumns; j++)
     {
-      if (map->arr[i][j] != NULL)
+      if (maps_getMapNode(map, i, j) != NULL)
       {
-        if (map->arr[i][j]->item == '.')
+        if ( maps_getMapNodeItem(maps_getMapNode(map, i, j)) == '.')
         {
           open_spaces++;
         }
@@ -284,9 +283,9 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
   }
 
   int max_num_piles;
-  if (num_piles > open_spaces - 26)
+  if (num_piles > open_spaces - MaxPlayers)
   {
-    max_num_piles = open_spaces - 26; //To allow for 26 players
+    max_num_piles = open_spaces - MaxPlayers; //To allow for MaxPlayers players
   }
   else
   {
@@ -306,7 +305,7 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
     }
     else
     { //put random amount of gold of at least 1 in pile, but not so much that there isn't enough gold for the rest of the piles
-      srand(time(0));
+     // srand(getppid());
       pile_gold = 1 + (rand() % ((gold_left - piles_left + 1) / 2)); //Divide max by 2 so as to not get disproportionately large piles
     }
 
@@ -317,19 +316,19 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
 
     //Loop through, and add gold to this location
     int space = 0;
-    for (int i = 0; i < 500; i++)
+    for (int i = 0; i < numOfRows; i++)
     {
-      for (int j = 0; j < 500; j++)
+      for (int j = 0; j < numOfColumns; j++)
       {
-        if (map->arr[i][j] != NULL)
+        if (maps_getMapNode(map, i, j) != NULL)
         {
-          if (map->arr[i][j]->item == '.')
+          if ( maps_getMapNodeItem(maps_getMapNode(map, i, j),item) == '.')
           {
             if (space == gold_location)
             {
-              map->arr[i][j]->item = '*';
+               maps_setMapNodeItem(maps_getMapNode(map, i, j), '*');
               gold_pile_t *pile = new_gold_pile(pile_gold);
-              map->arr[i][j]->type = pile;
+               maps_setMapNodeType(maps_getMapNode(map, i, j), pile);
             }
             space++;
           }
@@ -351,7 +350,6 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         // Check if the port is null
         addr_t *otherp = (addr_t *)arg;
 
-        // defensive
         if (otherp == NULL)
         {
                 log_v("handleMessage called with arg=NULL");
@@ -364,10 +362,10 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         if (strncmp(message, "PLAY ", strlen("PLAY ")) == 0)
         {
                 log_d("the num players %d", game->numplayers);
-                // check and make sure there are not more than 26 users
-                if (game->numplayers >= 26)
+                // check and make sure there are not more than MaxPlayers users
+                if (game->numplayers >= MaxPlayers)
                 {
-                        fprintf(stderr, "Sorry, no more than 26 players can join! Please try again later.\n");
+                        fprintf(stderr, "Sorry, no more than MaxPlayers players can join! Please try again later.\n");
                         return false;
                 }
 
@@ -390,25 +388,27 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                         return 7;
                 }
 
+                /*
                 // make sure the name is truncated to 20 char
                 if (strlen(real_name) > 20)
                 {
                         int diff = strlen(real_name) - 20;
                         real_name[strlen(real_name) - diff] = '\0';
                 }
+                */
 
                 // Create new player
-                player_t *newPlayer = player_new(game->map, real_name);
+                player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getRows, maps_getCols, '@');
+                newPlayer = player_set(game->map, newplayer);
 
                 // Add the player to the game struct array
                 server_dropPlayer(game->map, newPlayer);
                 playerNode_t *node = playerNode_new();
-                node->address = from;
                 node->player = newPlayer;
 
                 // add the player to the array by determing the index to add to
                 int i = 0;
-                while (((game->players->arr[i]) != NULL) && (i < 26))
+                while (((game->players->arr[i]) != NULL) && (i < MaxPlayers))
                 {
                         i++;
                 }
@@ -427,9 +427,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                         // Determine their characters
                         playerLetter = getCharacterBasedOnIndex(i);
                         log_s("The character letter %s\n", playerLetter);
-                        server_dropPlayer_char(newPlayer, *playerLetter);
-
-                        game->players->arr[i]->playerLetter = playerLetter;
+                        //server_dropPlayer_char(newPlayer, *playerLetter);
+                        player_setLetterAssigned(player, playerLetter);
+                        //game->players->arr[i]->playerLetter = playerLetter;
                 }
 
                 //Increment the number of players
@@ -475,7 +475,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 if (game->spectator != NULL)
                 {
                         // Send a `QUIT` message to the prior spectator, then forgets the prior spectator
-                        char *message_to_send = game_over_summar();
+                        char *message_to_send = game_over_summary();
                         message_send(game->spectator->address, message_to_send);
                         free(game->spectator);
                         free(message_to_send);
@@ -506,7 +506,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         else if (strncmp(message, "KEY Q", strlen("KEY Q")) == 0)
         {
                 log_v("A player is trying to quit.\n");
-                char *message_to_send = game_over_summar();
+                char *message_to_send = game_over_summary();
                 message_send(from, message_to_send);
 
                 free(message_to_send);
@@ -588,15 +588,15 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         }
 
         // Check if there is no gold left
-        int gold_left = get_gold_left(game->map);
+        int gold_left = maps_getTotalGoldLeft(game->map);
         if (gold_left == 0)
         {
                 // if so, print the tabular summary to all of the players
                 for (int j = 0; j < game->numplayers; j++)
                 {
                         // send all of the players a tabular summary
-                        addr_t new_address = game->players->arr[j]->address;
-                        char *message_to_send = game_over_summar();
+                        addr_t new_address = player_getIP(game->players->arr[j]);
+                        char *message_to_send = game_over_summary();
                         message_send(new_address, message_to_send);
                         free(message_to_send);
                 }
@@ -605,7 +605,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 {
                         // send all of the players a tabular summary
                         addr_t new_address = game->spectator->address;
-                        char *message_to_send = game_over_summar();
+                        char *message_to_send = game_over_summary();
                         message_send(new_address, message_to_send);
                         free(message_to_send);
                 }
@@ -618,8 +618,8 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 {
                         // send all of the players a tabular summary
                         player_t *player = game->players->arr[j]->player;
-                        send_player_gold(game, player, game->players->arr[j]->address);
-                        send_player_display(game, player, game->players->arr[j]->address);
+                        send_player_gold(game, player, player_getIP(game->players->arr[j]));
+                        send_player_display(game, player, player_getIP(game->players->arr[j]));
                 }
 
                 if (game->spectator != NULL)
@@ -632,6 +632,100 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 return false;
         }
 }
+
+
+/* Send the player a display message  */
+void send_player_display(game_t *game, player_t *player, addr_t from)
+{
+        // create the grid string and determine the size
+        char *mapstring = maps_playergrid(game->map, player);
+        int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
+        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
+
+        // begin sending the message
+        strcpy(DISPLAYMESSAGE, "DISPLAY\n");
+        strcat(DISPLAYMESSAGE, mapstring);
+        message_send(from, DISPLAYMESSAGE);
+
+        // free
+        free(mapstring);
+        free(DISPLAYMESSAGE);
+}
+
+/* Send the player a gold message  */
+void send_player_gold(game_t *game, player_t *player, addr_t from)
+{
+        char *goldmessage = createGoldMessage(game->map, player);
+        message_send(from, goldmessage);
+        free(goldmessage);
+}
+
+/**************** createGoldMessage ****************/
+char *createGoldMessage(map_t *map, player_t *player)
+{
+  char *message = malloc(20 * sizeof(char)); //allocate at least 20 chars of space
+  int just_collected = player->just_collected; //Need to check with Jake on this
+  int collected = player_getGold(player);
+  int left = maps_getTotalGoldLeft( map);
+
+  sprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
+  return message; //return message
+}
+
+player_t *player_set(map_t *map, player_t *player)
+{
+  //Loop through grid to determine amount of open spaces
+  int open_spaces = 0;
+  for (int i = 0; i < maps_getRows(map); i++)
+  {
+    for (int j = 0; j < maps_getCols; j++)
+    {
+      if (grid->arr[i][j] != NULL)
+      {
+        if (grid->arr[i][j]->item == '.')
+        {
+          open_spaces++;
+        }
+      }
+    }
+  }
+
+  //generate random player location index
+  //srand(getppid());
+  int player_location = (rand() % open_spaces);
+
+  //Loop through open spaces and place player there
+  int space = 0;
+  for (int i = 0; i < maps_getRows(map); i++)
+  {
+    for (int j = 0; j < maps_getCols; j++)
+    {
+      if (maps_getMapNode(map, i, j) != NULL)
+      {
+        if ( maps_getMapNodeItem(maps_getMapNode(map, i,j)=='.'))
+        {
+          if (space == player_location)
+          {
+            player_setYPosition(player, j);
+            player_setXPosition(player, i);
+          }
+          space++;
+        }
+      }
+    }
+  }
+
+  //set whole grid to not visible
+  for (int i = 0; i < maps_getRows(map); i++)
+  {
+    for (int j = 0; j < maps_getCols; j++)
+    {
+      player_addSeenMap(player, i, j,false);
+    }
+  }
+  return player;
+}
+
 
 /* Returns the alphabetical letter based on index */
 char *getCharacterBasedOnIndex(int i)
@@ -652,135 +746,135 @@ char *getCharacterBasedOnIndex(int i)
 
 void move_left(map_t *map, player_t *player)
 {
-  if (player->x >= 1)
+  if (player_getXPosition(player) >= 1)
   {
-    if (moveable(map->arr[player->y][player->x - 1]))
+    if (moveable(maps_getMapNode(map,player_getXPosition(player)-1,player_getYPosition(player))))
     {
-      player_move(map, player, player->x - 1, player->y);
+      player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player));
     }
   }
 }
 
 void move_left_MAX(map_t *map, player_t *player)
 {
-  while ((moveable(map->arr[player->y][player->x - 1])) && (player->x >= 1))
+  while ((moveable(maps_getMapNode(map,player_getXPosition(player)-1,player_getYPosition(player)))) && (player_getXPosition(player) >= 1))
   {
-    player_move(map, player, player->x - 1, player->y);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player));
   }
 }
 
 void move_right(map_t *map, player_t *player)
 {
-  if (player->x < map->columns)
+  if (player_getXPosition(player) < maps_getCols)
   {
-    if (moveable(map->arr[player->y][player->x + 1]))
+    if (moveable(maps_getMapNode(map,player_getXPosition(player)+1,player_getYPosition(player))))
     {
-      player_move(map, player, player->x + 1, player->y);
+      player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player));
     }
   }
 }
 
 void move_right_MAX(map_t *map, player_t *player)
 {
-  while ((moveable(map->arr[player->y][player->x + 1])) && (player->x < map->columns))
+  while ((moveable(maps_getMapNode(map,player_getXPosition(player)+1,player_getYPosition(player)))) && (player_getXPosition(player) < maps_getCols))
   {
-    player_move(map, player, player->x + 1, player->y);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player));
   }
 }
 
 void move_up(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y - 1][player->x]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player)player_getYPosition(player)-1)))
   {
-    player_move(map, player, player->x, player->y - 1);
+    player_move(map, player, player_getXPosition(player), player_getYPosition(player) - 1);
   }
 }
 
 void move_up_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y - 1][player->x]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
   {
-    player_move(map, player, player->x, player->y - 1);
+    player_move(map, player, player_getXPosition(player), player_getYPosition(player) - 1);
   }
 }
 
 void move_down(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y + 1][player->x]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)+1)))
   {
-    player_move(map, player, player->x, player->y + 1);
+    player_move(map, player, player_getXPosition(player), player_getYPosition(player) + 1);
   }
 }
 
 void move_down_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y + 1][player->x]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)+1)))
   {
-    player_move(map, player, player->x, player->y + 1);
+    player_move(map, player, player_getXPosition(player), player_getYPosition(player) + 1);
   }
 }
 
 void move_diag_up_left(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y - 1][player->x - 1]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
   {
-    player_move(map, player, player->x - 1, player->y - 1);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) - 1);
   }
 }
 
 void move_diag_up_left_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y - 1][player->x - 1]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
   {
-    player_move(map, player, player->x - 1, player->y - 1);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) - 1);
   }
 }
 
 void move_diag_up_right(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y - 1][player->x + 1]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
   {
-    player_move(map, player, player->x + 1, player->y - 1);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) + 1);
   }
 }
 
 void move_diag_up_right_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y - 1][player->x + 1]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
   {
-    player_move(map, player, player->x + 1, player->y - 1);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player) - 1);
   }
 }
 
 void move_diag_down_left(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y + 1][player->x - 1]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
   {
-    player_move(map, player, player->x - 1, player->y + 1);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) + 1);
   }
 }
 
 void move_diag_down_left_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y + 1][player->x - 1]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
   {
-    player_move(map, player, player->x - 1, player->y + 1);
+    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) + 1);
   }
 }
 
 void move_diag_down_right(map_t *map, player_t *player)
 {
-  if (moveable(map->arr[player->y + 1][player->x + 1]))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
   {
-    player_move(map, player, player->x + 1, player->y + 1);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player) + 1);
   }
 }
 
 void move_diag_down_right_MAX(map_t *map, player_t *player)
 {
-  while (moveable(map->arr[player->y + 1][player->x + 1]))
+  while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
   {
-    player_move(map, player, player->x + 1, player->y++);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player) +1);
   }
 }
 
@@ -806,80 +900,188 @@ bool moveable(mapnode_t *node)
 /********************* server_dropPlayer ********************/
 void server_dropPlayer(map_t *map, player_t *player)
 {
-  map->arr[player->y][player->x]->item = '@';
-  map->arr[player->y][player->x]->type = player;
+  maps_setMapNodeItem(maps_getMapNode(map_t* map, player_getXPosition(player),player_getYPosition(player)), '@');
+  maps_setMapNodeType(maps_getMapNode(map_t* map, player_getXPosition(player),player_getYPosition(player)), player);
   make_visible(player, map);
 }
 
-int get_num_gold(player_t *player)
-{
-  return (player->gold);
-}
-
-char *get_real_name(player_t *player)
-{
-  return (player->name);
-}
 
 /********************* player_move ********************/
 void player_move(map_t *map, player_t *player, int new_x, int new_y)
 {
-  int x = player_getXPosition;
-  int y = player_getYPosition;
+  int x = player_getXPosition(player);
+  int y = player_getYPosition(player);
 
   char char_to_switch;  //Character that the player is switching with
   void *item_to_switch; //Type that the character is switching with
 
-  if (map->arr[new_y][new_x]->item == '*')
+  if (maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)) == '*')
   { //If a pile of gold
-    gold_pile_t *pile = map->arr[new_y][new_x]->type;
-    map->goldleft -= pile->amount; //subtract amoun of gold from goldleft
+    gold_pile_t *pile = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y));
+    
+    aps_setTotalGoldLeft(map,pile->amount); //subtract amoun of gold from goldleft
     player->justCollected = pile->amount;
-    player->gold += pile->amount;
+    player_addGold(player,pile->amount);
     char_to_switch = '.';  //Player is switching with empty space
     item_to_switch = NULL; //Player is switching with null type
     //delete_gold_pile(pile);
   }
-  else if (map->arr[new_y][new_x]->item == '#')
+  else if (maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y))  == '#')
   { //if going down a hallway
     //same (hallway boolean in player takes care of hallway print)
     char_to_switch = '.';
     item_to_switch = NULL;
   }
-  else if (map->arr[new_y][new_x]->item == '@')
-  { //if going down a hallway
-    player_t *swapped_player = (player_t *)(map->arr[new_y][new_x]->type);
-    swapped_player->x = x;
-    swapped_player->y = y;
-    char_to_switch = map->arr[new_y][new_x]->item; //character at new place
-    item_to_switch = map->arr[new_y][new_x]->type; //type at new place
+  else if (maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)) == '@')
+  { //swap player
+    player_t *swapped_player = (player_t *)(maps_getMapNodeType(maps_getMapNode(map, new_x,new_y)));
+    player_setXPosition(swapped_player, x);
+    player_setYPosition(swapped_player, y);
+    char_to_switch = maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)); //character at new place
+    item_to_switch = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y)); //type at new place
   }
   else
   {
-    char_to_switch = map->arr[new_y][new_x]->item; //character at new place
-    item_to_switch = map->arr[new_y][new_x]->type; //type at new place
+    char_to_switch = maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)); //character at new place
+    item_to_switch = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y)); //type at new place
   }
 
   //set player coords to new spot
-  player->x = new_x;
-  player->y = new_y;
+  player_setXPosition(player, new_x);
+  player_setYPosition(player, new_y);
 
   //set things at new spot to the '@' character and player
-  map->arr[new_y][new_x]->item = '@';
-  map->arr[new_y][new_x]->type = player;
+  maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y,'@'));
+  maps_setMapNodeType(maps_getMapNode(map, new_x,new_y,player));
 
-  if (map->arr[y][x]->hallway)
+  if (maps_getMapNodeItem(maps_getMapNode(map,x,y))=='#')
   { //If a hallway is under player
     //Keep it that way
-    map->arr[y][x]->item = '#';
-    map->arr[y][x]->type = NULL;
+    maps_setMapNodeItem(maps_getMapNode(map, x,y,'#'));
+    maps_setMapNodeType(maps_getMapNode(map, x,y,NULL));
   }
   else
   { //If not
     //Put the new charcter and item where player is
-    map->arr[y][x]->item = char_to_switch;
-    map->arr[y][x]->type = item_to_switch;
+    maps_setMapNodeItem(maps_getMapNode(map, x,y,char_to_switch));
+    maps_setMapNodeType(maps_getMapNode(map, x,y,item_to_switch));
   }
 
   make_visible(player, map);
+}
+
+/* Creates an end game summary for all players */
+char *game_over_summary()
+{
+        // create the string
+        char *message_to_send = (char *)calloc(1000, sizeof(char));
+        strcpy(message_to_send, "QUIT ");
+
+        strcat(message_to_send, "Thanks for playing!\n");
+
+        // print the heading
+        strcat(message_to_send, "Player Letter\tPlayer Purse\tPlayer Name\n");
+
+        strcat(message_to_send, "-------------\t------------\t-----------\n");
+
+        int temp_num_players = game->numplayers;
+
+        // iterate through the players and add their information
+        while (temp_num_players > 0)
+        {
+                // get the information needed to print
+                char *player_letter = player_getLetterAssigned(game->players->arr[temp_num_players - 1]);
+                log_v(player_letter);
+
+                int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]));
+                char *player_purse_char = (char *)calloc(10, sizeof(char));
+                sprintf(player_purse_char, "%d", player_purse);
+
+                char *real_name = (char *)calloc(25, sizeof(char));
+                strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]));
+
+                // Add the portions of the table
+                strcat(message_to_send, "      ");
+                strcat(message_to_send, player_letter);
+
+                strcat(message_to_send, "      \t");
+                strcat(message_to_send, player_purse_char);
+
+                strcat(message_to_send, "\t\t");
+                strcat(message_to_send, real_name);
+                strcat(message_to_send, "\n");
+
+                // decrement num players to iterate through and free
+                temp_num_players--;
+                free(player_purse_char);
+                free(real_name);
+        }
+
+        log_v(message_to_send);
+
+        return message_to_send;
+}
+
+/* Search for a player based on their address  */
+player_t *searchByAddress(addr_t from)
+{
+        int j = 0;
+
+        // iterate through everyone
+        while ((message_eqAddr(player_getIP(game->players->arr[j]), from) != true) && (j < game->numplayers))
+        {
+                j++;
+        }
+
+        //Once the right address has been found
+        player_t *player = game->players->arr[j]->player;
+        return (player);
+}
+
+/********************* make_visible ********************/
+void make_visible(player_t *player, map_t *map)
+{
+  //loop through all nodes in grid
+  for (int x = 0; x < maps_getRows(map); x++)
+  {
+    for (int y = 0; y < maps_getCols(map); y++)
+    {
+      if (!(player_getSeenMap(player)[x][y]))
+      {
+        if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
+        {
+          player_addSeenMap(player,x,y,true);
+        }
+      }
+    }
+  }
+}
+
+void free_everything(game_t *game)
+{
+        if (game->spectator != NULL)
+        {
+              free(game->spectator);
+        }
+
+        // free
+        playerTable_delete(game->players);
+        maps_delete(game->map);
+        free(game);
+}
+
+bool isNumber(char number[])
+{
+        // iterate through it all
+        for (int i = 0; i < strlen(number); i++)
+        {
+                // use the isDigit method to check input is between 0 and 9
+                if (!isdigit(number[i]))
+                {
+
+                        fprintf(stderr, "Please enter a number\n");
+                        return false;
+                }
+        }
+        return true;
 }
