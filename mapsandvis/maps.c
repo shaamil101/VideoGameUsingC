@@ -22,6 +22,7 @@
 #include "log.h"
 #include "mem.h"
 #include "file.h"
+#include "player.h"
 
 typedef struct mapNode{
   char item;
