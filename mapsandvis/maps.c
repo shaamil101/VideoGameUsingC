@@ -515,7 +515,7 @@ void maps_setTotalGoldLeft(map_t* map, int totalGoldLeft)
     log_v("maps_setTotalGoldLeft: map is NULL");
     return;
   } else if (totalGoldLeft < 0) {
-    log_d("maps_setTotalGoldLeft: totalGoldLeft value of %d is invalid (can't be negative)", totalgoldleft);
+    log_d("maps_setTotalGoldLeft: totalGoldLeft value of %d is invalid (can't be negative)", totalGoldLeft);
     return;
   }
   map->totalGoldLeft = totalGoldLeft;

@@ -14,6 +14,8 @@
  * 
 */
 
+#include "player.h"
+
 typedef struct map map_t;
 
 typedef struct matrixIndex {
