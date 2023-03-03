@@ -12,10 +12,22 @@
 #include <player.c>
 #include <mem.h>
 #include <../support/message.h>
-#include <map.h>
+
+
 
 typedef struct player player_t;
-
+/** player_new
+ * 
+ * Returns a pointer to a player
+ * 
+ * Caller provides:
+ *  valid player name, ipaddress, integer for max characters allowed in name
+ *  total rows and total collumns, and the letter assigned to the player
+ * We return:
+ *  Returns a pointer to a player with values instantiated 
+ *  NULL pointer if given node is NULL
+ *  Null
+*/
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 
 void player_delete(player_t* player);
@@ -26,15 +38,15 @@ int player_getGold(player_t* player);
 
 int player_getJustCollected(player_t* player);
 
-void player_addSeenMap(player_t* player, int collumn, int row, bool state, map_t map);
+void player_addSeenMap(player_t* player, int collumn, int row, bool state);
 
 bool** player_getSeenMap(player_t* player);
 
-void player_setXPosition(player_t* player, int xPos, map_t map);
+void player_setXPosition(player_t* player, int xPos);
 
 int player_getXPosition(player_t* player);
 
-void player_setYPosition(player_t* player, int yPos, map_t map);
+void player_setYPosition(player_t* player, int yPos);
 
 int player_getYPosition(player_t* player);
 
