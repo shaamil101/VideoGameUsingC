@@ -522,7 +522,7 @@ typedef struct player{
 ### Definition of function prototypes
 
 ```c
-player_t* player_new(const char* playerName, addr_t ipAddress, int* maxCharacters, int* totalRows, int* totalCollumns, char letterAssigned);
+player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 void player_delete(player_t* player);
 void player_addGold(player_t* player, int gold);
 int player_getGold(player_t* player);
@@ -597,8 +597,7 @@ returns an integer representing the players gold
 
 Adds either true or false to the inner array at the correct x (outer array) and correct y (inner array)
 
-	if player is valid 
-		if x and y are greater than or euqal to 0 and less than or equal to max row or collums 
+	if player is valid  
 		index into the array with given row and collumn insert the boolean true indicating the spot is visible
 	return 
 
@@ -613,11 +612,10 @@ Returns an array of arrays storing either true or false for each point on the ma
 	return null
 
 #### player_setXPosition
-Sets the players current x position on the map 
+Sets the players current x position on the map. Server module checks if x is in range. 
 
 	if player is valid 
-		if x is greater than or equal to 0 and less than or equal to max collumns
-			set players x value as value given 
+		set players x value as value given 
 return 
 
 #### player_getXPosition
@@ -629,11 +627,10 @@ Returns the players current x position on the map
 	return null
 
 #### player_setYPosition
-Sets the players current y position on the map 
+Sets the players current y position on the map. Server module checks if y is in range. 
 
 	if player is valid 
-		if y is greater than or equal to 0 and less than or equal to max rows
-			set players x value as value given 
+		set players x value as value given 
 	return 
 
 #### player_getYPosition
