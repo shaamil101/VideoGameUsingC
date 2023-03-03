@@ -15,8 +15,19 @@
 
 
 
-
 typedef struct player player_t;
+/** player_new
+ * 
+ * Returns a pointer to a player
+ * 
+ * Caller provides:
+ *  valid player name, ipaddress, integer for max characters allowed in name
+ *  total rows and total collumns, and the letter assigned to the player
+ * We return:
+ *  Returns a pointer to a player with values instantiated 
+ *  NULL pointer if given node is NULL
+ *  Null
+*/
 /** player_new
  * 
  * Returns a pointer to a player
