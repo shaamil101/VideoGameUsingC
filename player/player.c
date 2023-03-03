@@ -71,14 +71,14 @@ int player_getGold(player_t* player){
     if (player){ //null check 
             return player->gold;
     }
-    return NULL;
+    return -1;
 }
 
 int player_getJustCollected(player_t* player){
     if (player){ //null check 
             return player->justCollected;
     }
-    return NULL;
+    return -1;
 }
 
 void player_addSeenMap(player_t* player, int collumn, int row, bool state){
@@ -107,7 +107,7 @@ int player_getXPosition(player_t* player){
     if (player){
         return player->x;
     }
-    return NULL;
+    return -1;
 }
 
 void player_setYPosition(player_t* player, int yPos){
@@ -120,7 +120,7 @@ int player_getYPosition(player_t* player){
     if (player){
         return player->y;
     }
-    return NULL;
+    return -1;
 }
 
 char* player_getRealName(player_t* player){
@@ -141,5 +141,5 @@ addr_t player_getIP(player_t* player){
     if (player){
         return player->IP;
     }
-    return;
+    return message_noAddr();
 }
