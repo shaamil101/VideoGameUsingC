@@ -141,5 +141,5 @@ addr_t player_getIP(player_t* player){
     if (player){
         return player->IP;
     }
-    return message_noAddr();
+    return;
 }
