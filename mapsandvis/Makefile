@@ -4,24 +4,33 @@
 # Wall Street Djournal, CS50 Nuggets 23W
 
 # object files, and the target library
-OBJS = maps.a
-LIBS = ../libcs50/libcs50-given.a  ../support/support.a ../player/player.a
-LLIBS = -L../libcs50 -L../support -L../player
+OBJS = maps.a mapstest.o
+LIBS = ../player/player.a ../support/support.a ../libcs50/libcs50-given.a
 PLAYERLIB = ../player
 SUPPORTLIB = ../support
-CFLAGS = -Wall -pedantic -std=c11 -ggdb $(LLIBS) $(LIBS) -I$(PLAYERLIB) -I$(SUPPORTLIB) -I../libcs50 $(FLAGS)
+CS50LIB = ../libcs50
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(PLAYERLIB) -I$(SUPPORTLIB) -I$(CS50LIB)
+LIBFLAGS = $(LIBS) -lm
 CC = gcc
 MAKE = make
 
-.PHONY: all test clean
+.PHONY: all maps.a mapstest clean
 
-all: maps.o
+all: maps.a mapstest
+
+maps.a: maps.o
 	ar cr maps.a maps.o
+
+mapstest: mapstest.o maps.a
+# $(CC) $(CFLAGS) mapstest.c maps.a ../player/player.a ../support/support.a ../libcs50/libcs50-given.a -I../player -I../support -lm -o mapstest
+	$(CC) $(CFLAGS) $(LIBFLAGS) mapstest.c maps.a $(LIBFLAGS) -o mapstest
 
 # Dependencies: object files depend on header files
 maps.o: maps.h
 
 # clean up after our compilation
 clean:
+	rm -f mapstest
+	rm -f maps.a
 	rm -f core
 	rm -f $(LIB) *~ *.o
