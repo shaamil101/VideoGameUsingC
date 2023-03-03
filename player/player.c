@@ -9,9 +9,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <player.h>
-#include <mem.h>
-#include <message.h>
+#include "player.h"
+#include "mem.h"
+#include "message.h"
 
 typedef struct player{
     int x;                        
@@ -146,5 +146,5 @@ addr_t player_getIP(player_t* player){
     if (player){
         return player->IP;
     }
-    return NULL;
+    return;
 }

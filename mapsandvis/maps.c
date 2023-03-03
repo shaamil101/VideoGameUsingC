@@ -31,10 +31,10 @@ typedef struct mapNode{
 } mapNode_t;
 
 typedef struct map{
-  mapNode_t*** grid; //2d array of mapNode_t pointers
 	int numRows;
 	int numCols;
   int totalGoldLeft;
+  mapNode_t*** grid; //2d array of mapNode_t pointers
 } map_t;
 
 /** maps_new 
@@ -78,7 +78,7 @@ map_t* maps_new(char* mapTextAddress)
     scanpointer++;
   }
   while (*scanpointer != '\0') { // keep passing through, counting number of new lines = num rows
-    if (scanpointer == '\n') {
+    if (*scanpointer == '\n') {
       numrows++;
     }
     scanpointer++;
@@ -95,8 +95,8 @@ map_t* maps_new(char* mapTextAddress)
   scanpointer = fileline;
   int row_idx = 0;
   int col_idx = 0;
-  while (scanpointer != NULL) {// go again through character buffer, keeping track of row and column indices
-    if (scanpointer == '\n') {
+  while (*scanpointer != '\n') {// go again through character buffer, keeping track of row and column indices
+    if (*scanpointer == '\n') {
       row_idx = 0;
       col_idx++;
       scanpointer++;
@@ -105,7 +105,7 @@ map_t* maps_new(char* mapTextAddress)
     if (*scanpointer != ' ' || *scanpointer != '-' || *scanpointer != '|' || *scanpointer != '+' || *scanpointer != '.' || *scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
      log_s("Text map %s had an invalid character", mapTextAddress); 
     }
-    mapNode_t* mapNode = mapNodeNew(scanpointer);
+    mapNode_t* mapNode = mapNodeNew(*scanpointer);
     if (mapNode == NULL) {
       log_v("Expected valid mapNode* but got NULL instead");
       return NULL;
@@ -113,7 +113,7 @@ map_t* maps_new(char* mapTextAddress)
     grid[row_idx][col_idx] = mapNode; // copy into the grid
     scanpointer++;
   }
-  map->grid = grid; // set the map grid 
+  map->grid = (mapNode_t***)grid; // set the map grid 
 
 	return map;// return the map struct
 }

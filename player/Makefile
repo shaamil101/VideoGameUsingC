@@ -4,22 +4,21 @@
 # Wall Street Djournal, CS50 Nuggets 23W
 
 # object files, and the target library
-OBJS = maps.o
-LIBS = -lm -l:libcs50-given.a  -l:support.a
-LLIBS = -L../libcs50 -L../support
-PLAYERLIB = ../player
+OBJS = player.o
+LIBS = -lm
+LLIBS = ../libcs50/libcs50-given.a  ../support/support.a
 SUPPORTLIB = ../support
-CFLAGS = -Wall -pedantic -std=c11 -ggdb $(LLIBS) $(LIBS) -I$(PLAYERLIB) -I$(SUPPORTLIB) -I../libcs50 $(FLAGS)
+CFLAGS = -Wall -pedantic -std=c11 -ggdb $(LIBS) -I$(SUPPORTLIB) -I../libcs50 $(FLAGS)
 CC = gcc
 MAKE = make
 
 .PHONY: all test clean
 
 all: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o maps
+	$(CC) $(CFLAGS) $(LLIBS) $(OBJS) -o player.o
 
 # Dependencies: object files depend on header files
-maps.o: maps.h
+player.o: player.h
 
 # clean up after our compilation
 clean:
