@@ -12,7 +12,7 @@
 #include <player.c>
 #include <mem.h>
 #include <../support/message.h>
-#include <map.h>
+
 
 typedef struct player player_t;
 
@@ -26,15 +26,15 @@ int player_getGold(player_t* player);
 
 int player_getJustCollected(player_t* player);
 
-void player_addSeenMap(player_t* player, int collumn, int row, bool state, map_t map);
+void player_addSeenMap(player_t* player, int collumn, int row, bool state);
 
 bool** player_getSeenMap(player_t* player);
 
-void player_setXPosition(player_t* player, int xPos, map_t map);
+void player_setXPosition(player_t* player, int xPos);
 
 int player_getXPosition(player_t* player);
 
-void player_setYPosition(player_t* player, int yPos, map_t map);
+void player_setYPosition(player_t* player, int yPos);
 
 int player_getYPosition(player_t* player);
 
