@@ -44,13 +44,14 @@ The *client* acts in one of two modes:
 
 1. *main*, recieves input when client is called from the command line, calls *parseArgs*, calls *startClient*, calls *message_loop*, calls *message_done*, and initializes a client data structure.
 2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not.
-3. *handleInputs* function used by message_loop for handling key inputs
-4. *handleMessage* function used by message_loop for handling the messages
-5. *handleQuit* handles the quit message
-6. *handleGold* handles the gold message
-7. *handleGrid* handles the grid message
-8. *handleDisplay* handles the display message
-9. *handleError* handles the error message
+3. *startClient* sets nCurses up and initializes the network
+4. *handleInputs* function used by message_loop for handling key inputs
+5. *handleMessage* function used by message_loop for handling the messages
+6. *handleQuit* handles the quit message
+7. *handleGold* handles the gold message
+8. *handleGrid* handles the grid message
+9. *handleDisplay* handles the display message
+10. *handleError* handles the error message
  
 ### Pseudo code for logic/algorithmic flow
 

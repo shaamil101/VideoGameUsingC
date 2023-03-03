@@ -157,7 +157,7 @@ typedef struct client {
 ### Definition of function prototypes
 ```c
 static int parseArgs(const int argc, char* argv[]);
-void initClient(client_t* client);
+void startClient(client_t* client);
 bool handleInputs(void* arg);
 bool handleMessage(void* arg, const addr_t addr, const char* message);
 void handleQuit(const char* message);
