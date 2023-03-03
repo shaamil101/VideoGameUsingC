@@ -10,7 +10,7 @@
 
 typedef struct player player_t;
 
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 
 void player_delete(player_t* player);
 

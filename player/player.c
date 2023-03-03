@@ -17,6 +17,8 @@ typedef struct player{
     int x;                        
     int y;                    
     bool** seenMap;
+    int maxrows;
+    int maxcolumns;
     int gold;
     int justCollected;
  	addr_t IP;      
@@ -24,11 +26,11 @@ typedef struct player{
     char* realName;
 } player_t; 
 
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
     if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
-            char* newName;
+            char newName[maxCharacters];
             for (int i = 0; i < maxCharacters; i ++){
                 newName[i] = playerName[i];
             }
@@ -41,8 +43,10 @@ player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters
         playerNew->gold = 0;
         playerNew->justCollected = 0;
         playerNew->seenMap = mem_malloc((totalRows*totalCollumns)*sizeof(bool));
-        playerNew->x = NULL; 
-        playerNew->y = NULL; 
+        playerNew->x = -1; 
+        playerNew->y = -1;
+        playerNew->maxrows = totalRows;
+        playerNew->maxcolumns = totalCollumns;
         return playerNew;
     }
     return NULL;
@@ -71,21 +75,20 @@ int player_getGold(player_t* player){
     if (player){ //null check 
             return player->gold;
     }
-    return NULL;
+    return -1;
 }
 
 int player_getJustCollected(player_t* player){
     if (player){ //null check 
             return player->justCollected;
     }
-    return NULL;
+    return -1;
 }
 
 void player_addSeenMap(player_t* player, int row, int collumn, bool state){
     if (player){//null check
-        if ((0 <= player->x <= maxCollumns) && (0 <= player->y <= maxRows)){
-            bool temp = player->seenMap[collumn][row];
-            temp = state;
+        if ((0 <= player->x && player->x <= player->maxcolumns) && (0 <= player->y && player->y <= player->maxrows)){
+            player->seenMap[collumn][row] = state;
         }
     }
 }
@@ -99,7 +102,7 @@ bool** player_getSeenMap(player_t* player){
 
 void player_setXPosition(player_t* player, int xPos){
     if (player){
-        if (0 <= xPos <= maxCollumns){
+        if (0 <= xPos && xPos <= player->maxcolumns){
             player->x = xPos;
         }
     }
@@ -110,12 +113,12 @@ int player_getXPosition(player_t* player){
     if (player){
         return player->x;
     }
-    return NULL;
+    return -1;
 }
 
 void player_setYPosition(player_t* player, int yPos){
     if (player){
-        if (0 <= yPos <= maxRows){
+        if (0 <= yPos && yPos <= player->maxrows){
             player->y = yPos;
         }
     }
@@ -125,7 +128,7 @@ int player_getYPosition(player_t* player){
     if (player){
         return player->y;
     }
-    return NULL;
+    return -1;
 }
 
 char* player_getRealName(player_t* player){
@@ -139,12 +142,12 @@ char player_getLetterAssigned(player_t* player){
     if (player){
         return player->letterAssigned;
     }
-    return NULL;
+    return '\0';
 }
 
 addr_t player_getIP(player_t* player){
     if (player){
         return player->IP;
     }
-    return;
+    return message_noAddr();
 }

@@ -59,6 +59,7 @@ map_t* maps_new(char* mapTextAddress)
     log_v("Text map passed to maps_new is NULL");
     return NULL;
   }
+  log_s("Creating new map from text map %s...", mapTextAddress);
   FILE* fp;
   if ((fp = fopen(mapTextAddress, "r")) == NULL) { // verify mapTextAddress is a readable file (in requirements we are allowed to assume it is a valid map)
     log_s("Text map %s could not be read", mapTextAddress);
@@ -73,7 +74,7 @@ map_t* maps_new(char* mapTextAddress)
   char* scanpointer = fileline; // for scanning through file
   int numrows = 0;
   int numcols = 0;
-  while (*scanpointer != '\n' || *scanpointer != '\0') { // pass through first line to get number of columns
+  while (*scanpointer != '\n' && *scanpointer != '\0') { // pass through first line to get number of columns
     numcols++;
     scanpointer++;
   }
@@ -90,30 +91,33 @@ map_t* maps_new(char* mapTextAddress)
   (*map).numCols = numcols;// set row and column numbers of map struct
   (*map).numRows = numrows;
 
-	mapNode_t* (*grid) [numrows] = malloc( sizeof(mapNode_t*[numrows][numcols]) ); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
-	
+  mapNode_t*** grid = mem_malloc_assert(sizeof(mapNode_t*) * numrows , "maps_new: Unable to allocate memory for grid rows"); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
+	for (int i = 0; i < numrows; i++) {
+    grid[i] = mem_malloc_assert(sizeof(mapNode_t*) * numcols, "maps_new: Unable to allocate memory for grid columns");
+  }
+
   scanpointer = fileline;
   int row_idx = 0;
   int col_idx = 0;
-  while (*scanpointer != '\n') {// go again through character buffer, keeping track of row and column indices
+  while (*scanpointer != '\0') {// go again through character buffer, keeping track of row and column indices
     if (*scanpointer == '\n') {
-      row_idx = 0;
-      col_idx++;
+      row_idx++;
+      col_idx = 0;
       scanpointer++;
       continue;
     }
-    if (*scanpointer != ' ' || *scanpointer != '-' || *scanpointer != '|' || *scanpointer != '+' || *scanpointer != '.' || *scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
-     log_s("Text map %s had an invalid character", mapTextAddress); 
+    if (*scanpointer != ' ' && *scanpointer != '-' && *scanpointer != '|' && *scanpointer != '+' && *scanpointer != '.' && *scanpointer != '#') { // 	easy to check right here if char is valid (' ' - | + . # are valid)
+     log_c("Text map had an invalid character %c", *scanpointer); 
     }
     mapNode_t* mapNode = mapNodeNew(*scanpointer);
     if (mapNode == NULL) {
       log_v("Expected valid mapNode* but got NULL instead");
       return NULL;
     }
-    grid[row_idx][col_idx] = mapNode; // copy into the grid
+    grid[row_idx][col_idx++] = mapNode; // copy into the grid
     scanpointer++;
   }
-  map->grid = (mapNode_t***)grid; // set the map grid 
+  map->grid = grid; // set the map grid 
 
 	return map;// return the map struct
 }
@@ -141,8 +145,8 @@ char* maps_basegrid(map_t* map)
   int numcols = maps_getCols(map);
 	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
 	char* charptr = mapstring;
-  for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
-    for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
+  for (int r = 0; r < numrows; r++) { // for each row r in the map (starting from 0)
+    for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
       *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
@@ -557,6 +561,9 @@ void maps_delete(map_t* map)
         if ((node=map->grid[r][c]) != NULL) {
           free(node);
         }
+      }
+      if (map->grid[r] != NULL) {
+        free(map->grid[r]);
       }
     }
     free(map->grid);

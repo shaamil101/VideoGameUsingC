@@ -14,8 +14,8 @@ MAKE = make
 
 .PHONY: all test clean
 
-all: $(OBJS)
-	$(CC) $(CFLAGS) $(LLIBS) $(OBJS) -o player.o
+all: player.o
+	ar cr player.a player.o
 
 # Dependencies: object files depend on header files
 player.o: player.h
