@@ -42,7 +42,7 @@ player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int 
 *  nothing
 * 
 */
-void player_delete(player_t* player);
+void player_delete(player_t* player, int yRange);
 
 
 /** player_addGold

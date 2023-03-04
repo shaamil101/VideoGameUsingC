@@ -28,16 +28,18 @@ typedef struct player{
 player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int xRange, int yRange, char letterAssigned){
     if (playerName && maxCharacters){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
+        char* name;
         if (strlen(playerName) > maxCharacters){
-            char newName[maxCharacters];
+            name = mem_calloc_assert(maxCharacters+1,sizeof(char),"Unable to allocate memory for playername");
             for (int i = 0; i < maxCharacters; i ++){
-                newName[i] = playerName[i];
+                name[i] = playerName[i];
             }
-            playerName = newName;
+        } else {
+            name = mem_calloc_assert(maxCharacters+1,sizeof(char),"Unable to allocate memory for playername");
+            strcpy(name, playerName);
         }
+        playerNew->realName = name;
         playerNew->letterAssigned = letterAssigned;
-        playerNew->realName = mem_malloc(sizeof(char)*maxCharacters);
-        playerNew->realName = playerName;
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
@@ -57,8 +59,11 @@ player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int 
     return NULL;
 }
 
-void player_delete(player_t* player){
+void player_delete(player_t* player, int yRange){
     if (player){ //null check 
+        for (int i = 0; i < yRange; i++) {
+            mem_free(player->seenMap[i]);
+        }
         mem_free(player->seenMap); //frees 2d array
         mem_free(player->realName); //frees char string 
         mem_free(player); //frees player object 

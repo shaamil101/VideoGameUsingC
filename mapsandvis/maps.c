@@ -123,6 +123,7 @@ map_t* maps_new(char* mapTextAddress)
     grid[row_idx][col_idx++] = mapNode; // copy into the grid
     scanpointer++;
   }
+  free(fileline);
   map->grid = grid; // set the map grid 
 
 	return map;// return the map struct

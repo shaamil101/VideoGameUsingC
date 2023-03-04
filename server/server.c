@@ -72,7 +72,7 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount);
 bool handleMessage(void *arg, const addr_t from, const char *message);
 gold_pile_t *new_gold_pile(int size);
 void delete_gold_pile(gold_pile_t *pile);
-void playerTable_delete(playerTable_t *playerTable);
+void playerTable_delete(playerTable_t *playerTable, int yRange);
 spec_t *spectator_new(addr_t address);
 playerTable_t *playerTable_new();
 game_t *gamenode_new(int num_nuggets, map_t *curr_map);
@@ -81,7 +81,7 @@ void send_player_gold(game_t *game, player_t *player, addr_t from);
 void send_spectator_gold(game_t *game, addr_t from);
 char *createGoldMessage(map_t *map, player_t *player);
 player_t *player_set(map_t *map, player_t *player);
-char *getCharacterBasedOnIndex(int i);
+char getCharacterBasedOnIndex(int i);
 void move_left(map_t *map, player_t *player);
 void move_right(map_t *map, player_t *player);
 void move_up(map_t *map, player_t *player);
@@ -157,14 +157,15 @@ playerTable_t *playerTable_new()
 }
 
 /* Deletes everything in the player table */
-void playerTable_delete(playerTable_t *playerTable)
+void playerTable_delete(playerTable_t *playerTable, int yRange)
 {
         for (int i = 0; i < MaxPlayers; i++)
         {
                 // loop through everything in the array
                 if (playerTable->arr[i] != NULL)
                 {
-                        player_delete(playerTable->arr[i]->player);
+                        player_delete(playerTable->arr[i]->player, yRange);
+                        free(playerTable->arr[i]);
                 }
         }
         free(playerTable);
@@ -467,7 +468,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 // Assign the player to arr[i] and add the player letter 'A'
                 (game->players->arr[i]) = node;
-                char *playerLetter;
+                char playerLetter;
 
                 log_d("The index: %d\n", i);
 
@@ -478,9 +479,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                         // Determine their characters
                         playerLetter = getCharacterBasedOnIndex(i);
-                        log_s("The character letter %s\n", playerLetter);
+                        log_c("The character letter %c\n", playerLetter);
                         //server_dropPlayer_char(newPlayer, *playerLetter);
-                        player_setLetterAssigned(game->players->arr[i]->player, *playerLetter);
+                        player_setLetterAssigned(game->players->arr[i]->player, playerLetter);
                         //game->players->arr[i]->playerLetter = playerLetter;
                 }
 
@@ -489,7 +490,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 // Respond with OK 'char letter'
                 char letter[100] = "OK ";
-                strcat(letter, playerLetter);
+                letter[3] = playerLetter;
 
                 // Send the message
                 message_send(from, letter);
@@ -754,7 +755,6 @@ char *createGoldMessage(map_t *map, player_t *player)
   int just_collected = player_getJustCollected(player); //Need to check with Jake on this
   int collected = player_getGold(player);
   int left = maps_getTotalGoldLeft( map);
-  fprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
   sprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
   return message; //return message
 }
@@ -819,18 +819,17 @@ player_t *player_set(map_t *map, player_t *player)
 
 
 /* Returns the alphabetical letter based on index */
-char *getCharacterBasedOnIndex(int i)
+char getCharacterBasedOnIndex(int i)
 {
-    char *toReturn;
+    char toReturn;
     if (i < 0 || i > 25)
     {
         fprintf(stderr, "Please enter a valid index number.\n");
-        toReturn = NULL;
+        toReturn = '\0';
     }
     else
     {
-        toReturn = (char *)malloc(sizeof(char));
-        *toReturn = (char)(i + 65);
+      toReturn = (i + 65);
     }
     return toReturn;
 }
@@ -1010,7 +1009,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   { //If a pile of gold
     gold_pile_t *pile = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y));
     
-    maps_setTotalGoldLeft(map,pile->amount); //subtract amoun of gold from goldleft
+    maps_setTotalGoldLeft(map,maps_getTotalGoldLeft(map)-pile->amount); //subtract amoun of gold from goldleft
     player_setJustCollected(player, pile->amount);
     player_addGold(player,pile->amount);
     char_to_switch = '.';  //Player is switching with empty space
@@ -1157,7 +1156,7 @@ void free_everything(game_t *game)
         }
 
         // free
-        playerTable_delete(game->players);
+        playerTable_delete(game->players, maps_getYrange(game->map));
         maps_delete(game->map);
         free(game);
 }
