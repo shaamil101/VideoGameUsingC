@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "player.h"
 #include "mem.h"
 #include "message.h"
@@ -24,8 +25,8 @@ typedef struct player{
     char* realName;
 } player_t; 
 
-player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
-    if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int xRange, int yRange, char letterAssigned){
+    if (playerName && maxCharacters){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
             char newName[maxCharacters];
@@ -40,7 +41,15 @@ player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int 
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
-        playerNew->seenMap = mem_malloc((totalRows * totalCollumns)*sizeof(bool));
+
+        bool** seenMap = mem_calloc_assert(yRange,sizeof(bool*), "unable to allocate memory for player->seenMap");
+        for (int i = 0; i < yRange; i++) {
+            seenMap[i] = mem_calloc_assert(xRange,sizeof(bool), "unable to allocate memory for player->seenMap");
+            for (int j = 0; j < xRange; j++) {
+                seenMap[i][j] = false;
+            }
+        }
+        playerNew->seenMap = seenMap;
         playerNew->x = 0; 
         playerNew->y = 0; 
         return playerNew;
@@ -89,9 +98,12 @@ void player_setJustCollected(player_t* player, int justCollected)
     return;
 }
 
-void player_addSeenMap(player_t* player, int collumn, int row, bool state){
+void player_addSeenMap(player_t* player, int x, int y, bool state){
+    int row = y;
+    int collumn = x;
+
     if (player){//null check
-        player->seenMap[collumn][row] = state;
+        player->seenMap[row][collumn] = state;
     }
 }
 
@@ -141,6 +153,14 @@ char player_getLetterAssigned(player_t* player){
         return player->letterAssigned;
     }
     return '\0';
+}
+
+void player_setLetterAssigned(player_t* player, char letter)
+{
+    if (player != NULL && isupper(letter)){
+        player->letterAssigned = letter;
+    }
+    return;
 }
 
 addr_t player_getIP(player_t* player){

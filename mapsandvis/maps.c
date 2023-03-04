@@ -28,6 +28,7 @@ typedef struct mapNode{
   char item;
   void* type;
   bool isTransparent;
+  bool isHallway;
 } mapNode_t;
 
 typedef struct map{
@@ -36,6 +37,11 @@ typedef struct map{
   int totalGoldLeft;
   mapNode_t*** grid; //2d array of mapNode_t pointers
 } map_t;
+
+static bool firstAndEighthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool secondAndThirdOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool fourthAndFifthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool sixthAndSeventhOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
 
 /** maps_new 
  * 
@@ -91,7 +97,7 @@ map_t* maps_new(char* mapTextAddress)
   (*map).numCols = numcols;// set row and column numbers of map struct
   (*map).numRows = numrows;
 
-  mapNode_t*** grid = mem_malloc_assert(sizeof(mapNode_t*) * numrows , "maps_new: Unable to allocate memory for grid rows"); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
+  mapNode_t*** grid = mem_malloc_assert(sizeof(mapNode_t**) * numrows , "maps_new: Unable to allocate memory for grid rows"); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
 	for (int i = 0; i < numrows; i++) {
     grid[i] = mem_malloc_assert(sizeof(mapNode_t*) * numcols, "maps_new: Unable to allocate memory for grid columns");
   }
@@ -147,7 +153,33 @@ char* maps_basegrid(map_t* map)
 	char* charptr = mapstring;
   for (int r = 0; r < numrows; r++) { // for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
-      *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+      *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
+    }
+    *(charptr++) = '\n';// 	add a new line to the string (for next row)
+  }
+	*(charptr++) = '\0'; // make last char a terminating null
+	return mapstring; // return the string
+}
+
+char* maps_visiblebasegrid(map_t* map, int row, int col)
+{
+  if (map == NULL) {// validate args
+    log_v("Got NULL map pointer in maps_basegrid");
+    return NULL;
+  }
+  int numrows = maps_getRows(map);
+  int numcols = maps_getCols(map);
+	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
+	char* charptr = mapstring;
+  for (int r = 0; r < numrows; r++) { // for each row r in the map (starting from 0)
+    for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
+      if (row == r && col == c) {
+        *(charptr++) = '@';
+      } else if (isVisible(map, col, row, c, r)) {
+        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
+      } else {
+        *(charptr++) = ' '; 
+      }
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
   }
@@ -182,14 +214,14 @@ char* maps_spectatorgrid(map_t* map)
 	char* charptr = mapstring;
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
-      mapNode_t* node = (maps_getMapNode(map, r, c));
+      mapNode_t* node = (maps_getMapNode(map, c, r));
       if (node->item == '@') { // if is a player
         player_t* player = (player_t*)(map->grid[r][c]->type);
         *(charptr++) = player_getLetterAssigned(player);
       } else if (node->item == '*') { // if it's gold
         *(charptr++) = node->item;
       } else { // otherwise print normal
-        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
       }
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
@@ -231,9 +263,9 @@ char* maps_playergrid(map_t* map, player_t* player)
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
       if (seenMap[r][c]) { // if the player has seen the point before
-        mapNode_t* node = (maps_getMapNode(map, r, c));
+        mapNode_t* node = (maps_getMapNode(map, c, r));
         if (node != NULL) { // NULL check for node
-          if (isVisible(map, player_getYPosition(player), player_getXPosition(player), r, c)) { // if currently visible to player
+          if (isVisible(map, player_getXPosition(player), player_getYPosition(player), c, r)) { // if currently visible to player
             if (node->item == '@') { // if is a player
               player_t* playerAtPoint = (player_t*)(map->grid[r][c]->type);
               if (player_getLetterAssigned(playerAtPoint) == player_getLetterAssigned(player)) {
@@ -244,10 +276,14 @@ char* maps_playergrid(map_t* map, player_t* player)
             } else if (node->item == '*') { // if it's gold
               *(charptr++) = node->item;
             } else { // otherwise print normal
-              *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+              *(charptr++) = maps_getMapNodeItem(node); // 	add char at that index of the map_t->grid 2d array to the string
             }
           } else { // not currently visible to player
-            *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+            if (node->item == '@' || node->item == '*') {// if it is a player or gold
+              *(charptr++) = '.'; // make it an empty room slot instead
+            } else { // not player or gold and not visible (but already seen by player), add normally
+              *(charptr++) = maps_getMapNodeItem(node); // 	add char at that index of the map_t->grid 2d array to the string
+            }
           }
         } else {
           log_v("maps_playergrid: got NULL mapNode in the map");
@@ -275,12 +311,16 @@ char* maps_playergrid(map_t* map, player_t* player)
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+bool isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
 {
   if (map == NULL) { // validate args
     log_v("isVisible: received NULL map pointer");
     return false;
   }
+  int playerRow = playerY;
+  int playerCol = playerX;
+  int testRow = testY;
+  int testCol = testX;
   int numRows = map->numRows;
   int numCols = map->numCols;
   if (playerRow < 0 || playerRow >= numRows) { // 	make sure both points row and column values are equal to or less than the map row and column (and non-negative)
@@ -302,14 +342,17 @@ bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCo
   int changeInCols = testCol - playerCol;
   int changeInRows = testRow - playerRow;
 
-  if (changeInCols == 0 && changeInRows > 0) { // vertical down line case: (change in columns is 0, change in rows is positive)
+  if (changeInCols == 0 && changeInRows == 0) {
+    return true; // self is visible
+  } else if (changeInCols == 0 && changeInRows > 0) { // vertical down line case: (change in columns is 0, change in rows is positive)
     for (int row = playerRow+1; row < testRow; row++) { 	// 	for each gridpoint along the row (player position + 1 incremented by (1 to testpoint]
       if (!map->grid[row][playerCol]->isTransparent) { // if point isn't transparent
         return false;
       }
     }
     return true; // if we made it this far then it's visible from the player point
-  } else if (changeInCols == 0 && changeInRows < 0) { //vertical up line (change in columsn is 0, change in rows is negative)
+  } 
+  else if (changeInCols == 0 && changeInRows < 0) { //vertical up line (change in columsn is 0, change in rows is negative)
      for (int row = playerRow-1; row > testRow; row--) { // for each gridpoint along the row ( player position - 1 decremented by 1)
       if (!map->grid[row][playerCol]->isTransparent) { // if point isn't transparent
         return false;
@@ -330,48 +373,77 @@ bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCo
       }
     }
     return true; // return true if we make it to the end
-  } else if (changeInCols > 0) { // sloped right line (non-zero change in rows and columns, but change in columns is positive)
-    double slope = changeInRows/changeInCols; // get the slope of the line
-    double intersect; // declare some variables we'll use
-    int intersectFloor;
-    int intersectCeiling;
-    for (int col = playerCol+1; col < testCol; col++) { // for each gridpoint along the col ( player position + 1 incremented by 1)
-      intersect = playerRow + ((col-playerCol)*slope); // get the intersection on the row (doubel value)
-      if (intersect == (int)intersect) { // intersects an integer gridpoint
-        if (!map->grid[(int)intersect][playerCol]->isTransparent){ // if point isn't transparent
+  } else if (changeInRows == changeInCols) {// diagonals
+    if (changeInRows > 0) {
+      int col = playerCol+1;
+      int row = playerRow+1;
+      while (col < testCol) {
+        if (!map->grid[row++][col++]->isTransparent) { // if point isn't transparent
           return false;
-        } else {
-          intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
-          intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
-          if (!map->grid[intersectFloor][playerCol]->isTransparent && !map->grid[intersectCeiling][playerCol]->isTransparent) { // if both points aren't transparent
-            return false;
-          }
         }
       }
-    }
     return true; // return true if we make it to the end
-  } else if (changeInCols < 0) { // sloped left line case (non-zero change in rows and columns, but change in columns is negative)
-    double slope = changeInRows/changeInCols; // get the slope of the line
-    double intersect; // declare some variables we'll use
-    int intersectFloor;
-    int intersectCeiling;
-    for (int col = playerCol-1; col > testCol; col--) { // for each gridpoint along the col ( player position - 1 decremented by 1)
-      intersect = playerRow + ((col-playerCol)*slope); // calculate the intersescting row point (double, in between integers)
-      if (intersect == (int)intersect) { // intersects an integer gridpoint
-        if (!map->grid[(int)intersect][playerCol]->isTransparent){ // if point isn't transparent
+    } else {// changeInRows < 0
+      int col = playerCol-1;
+      int row = playerRow-1;
+      while (col > testCol) {
+        if (!map->grid[row--][col--]->isTransparent) { // if point isn't transparent
           return false;
-        } else {
-          intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
-          intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
-          if (!map->grid[intersectFloor][playerCol]->isTransparent && !map->grid[intersectCeiling][playerCol]->isTransparent) { // if both points aren't transparent
-            return false; // can't be seen from player pos
-          }
         }
       }
-    }
     return true; // return true if we make it to the end
+    }
+  } else if (changeInRows == -1*changeInCols) { // other diagonals
+    if (changeInRows > 0) {
+      int col = playerCol-1;
+      int row = playerRow+1;
+      while (col > testCol) {
+        if (!map->grid[row++][col--]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+    return true; // return true if we make it to the end
+    } else {// changeInRows < 0
+      int col = playerCol+1;
+      int row = playerRow-1;
+      while (col < testCol) {
+        if (!map->grid[row--][col++]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+      return true; // return true if we make it to the end
+    }
   }
-  return false; // if error and slips through cracks of if-clauses
+  else if (changeInRows < 0) {
+    if (changeInCols < 0) { // second quadrant
+      if (changeInRows < changeInCols) { // third octant
+        return secondAndThirdOctant(map, playerRow, playerCol, testRow, testCol);
+      } else { // fourth octant
+        return fourthAndFifthOctant(map, playerRow, playerCol, testRow, testCol);
+      }
+    } else if (changeInCols > 0) { // first quadrant
+      if (changeInRows < -1*changeInCols) { //second octant
+        return secondAndThirdOctant(map, playerRow, playerCol, testRow, testCol);
+      } else { // first octant
+        return firstAndEighthOctant(map, playerRow, playerCol, testRow, testCol);
+      }
+    }
+  } else if (changeInRows > 0){ // third quadrant
+    if (changeInCols < 0) {
+      if (changeInRows > -1*changeInCols) { // sixth octant
+        return sixthAndSeventhOctant(map, playerRow, playerCol, testRow, testCol);
+      } else { // fifth octant
+        return fourthAndFifthOctant(map, playerRow, playerCol, testRow, testCol);
+      }
+    } else if (changeInCols > 0) { // fourth quadrant
+      if (changeInRows > changeInCols) { // seventh octant
+        return sixthAndSeventhOctant(map, playerRow, playerCol, testRow, testCol);
+      } else { // eigth octant
+        return firstAndEighthOctant(map, playerRow, playerCol, testRow, testCol);
+      }
+    }
+  }
+  return false;
 }
 
 
@@ -411,6 +483,16 @@ int maps_getCols(map_t* map)
   return map->numCols;
 }
 
+int maps_getXrange(map_t* map)
+{
+  return(maps_getCols(map));
+}
+
+int maps_getYrange(map_t* map)
+{
+  return(maps_getRows(map));
+}
+
 /** maps_getMapNode
  * 
  * Returns the mapNode at the row, column index of a given map grid
@@ -423,8 +505,10 @@ int maps_getCols(map_t* map)
  *  mapNode pointer at that gridpoint
  *  Null pointer if anything invalid
 */
-mapNode_t* maps_getMapNode(map_t* map, int row, int col)
+mapNode_t* maps_getMapNode(map_t* map, int x, int y)
 {
+  int row = y;
+  int col = x;
   if (map == NULL) {
     log_v("map_getMapNode: map is NULL");
     return NULL;
@@ -581,7 +665,15 @@ mapNode_t* mapNodeNew(char item)
   mapNode_t* node = mem_malloc_assert(sizeof(mapNode_t), "Unable to allocate memory for mapnode struct\n");
   node->item = item;
   node->isTransparent = (item == '.');
+  node->isHallway = (item == '#');
   return node;
+}
+
+bool maps_ifHallwayNode(mapNode_t* node) {
+  if (node == NULL) {
+    return false;
+  }
+  return node->isHallway;
 }
 
 void mapNodeDelete(mapNode_t* node)
@@ -592,4 +684,112 @@ void mapNodeDelete(mapNode_t* node)
   }
   free(node);
   // don't delete item because it's either a gold pile or a player, server will free those
+}
+
+static bool firstAndEighthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+{
+  int changeInRows = testRow - playerRow; // find change in rows and cols again
+  int changeInCols = testCol - playerCol;
+
+  double slope = (double)changeInRows/(double)changeInCols; // get the slope of the line
+  double intersect; // declare some variables we'll use for tracking intersect points
+  int intersectFloor;
+  int intersectCeiling;
+
+  for (int col = playerCol+1; col < testCol; col++) { // for each gridpoint along the col ( player position + 1 incremented by 1)
+    intersect = (double)playerRow + (((double)col-(double)playerCol)*slope); // get the intersection on the row (doubel value)
+    if (intersect == trunc(intersect)) { // intersects an integer gridpoint
+      if (!map->grid[(int)trunc(intersect)][col]->isTransparent){ // if point isn't transparent
+        return false;
+      }
+    } else {
+      intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
+      intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
+      if (!map->grid[intersectFloor][col]->isTransparent && !map->grid[intersectCeiling][col]->isTransparent) { // if both points aren't transparent
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+static bool secondAndThirdOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+{
+  int changeInRows = testRow - playerRow; // find change in rows and cols again
+  int changeInCols = testCol - playerCol;
+
+  double slope = (double)changeInCols/(double)changeInRows; // get the slope of the line
+  double intersect; // declare some variables we'll use for tracking intersect points
+  int intersectFloor;
+  int intersectCeiling;
+
+  for (int row = playerRow-1; row > testRow; row--) { // for each gridpoint along the col ( player position + 1 incremented by 1)
+    intersect = (double)playerCol + (((double)row-(double)playerRow)*slope); // get the intersection on the row (doubel value)
+    if (intersect == trunc(intersect)) { // intersects an integer gridpoint
+      if (!map->grid[row][(int)trunc(intersect)]->isTransparent){ // if point isn't transparent
+        return false;
+      }
+    } else {
+      intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
+      intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
+      if (!map->grid[row][intersectFloor]->isTransparent && !map->grid[row][intersectCeiling]->isTransparent) { // if both points aren't transparent
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+static bool fourthAndFifthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+{
+  int changeInRows = testRow - playerRow; // find change in rows and cols again
+  int changeInCols = testCol - playerCol;
+
+  double slope = (double)changeInRows/(double)changeInCols; // get the slope of the line
+  double intersect; // declare some variables we'll use for tracking intersect points
+  int intersectFloor;
+  int intersectCeiling;
+
+  for (int col = playerCol-1; col > testCol; col--) { // for each gridpoint along the col ( player position + 1 incremented by 1)
+    intersect = (double)playerRow + (((double)col-(double)playerCol)*slope); // get the intersection on the row (doubel value)
+    if (intersect == trunc(intersect)) { // intersects an integer gridpoint
+      if (!map->grid[(int)trunc(intersect)][col]->isTransparent){ // if point isn't transparent
+        return false;
+      }
+    } else {
+      intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
+      intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
+      if (!map->grid[intersectFloor][col]->isTransparent && !map->grid[intersectCeiling][col]->isTransparent) { // if both points aren't transparent
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+static bool sixthAndSeventhOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+{
+  int changeInRows = testRow - playerRow; // find change in rows and cols again
+  int changeInCols = testCol - playerCol;
+
+  double slope = (double)changeInCols/(double)changeInRows; // get the slope of the line
+  double intersect; // declare some variables we'll use for tracking intersect points
+  int intersectFloor;
+  int intersectCeiling;
+
+  for (int row = playerRow+1; row < testRow; row++) { // for each gridpoint along the col ( player position + 1 incremented by 1)
+    intersect = (double)playerCol + (((double)row-(double)playerRow)*slope); // get the intersection on the row (doubel value)
+    if (intersect == trunc(intersect)) { // intersects an integer gridpoint
+      if (!map->grid[row][(int)trunc(intersect)]->isTransparent){ // if point isn't transparent
+        return false;
+      }
+    } else {
+      intersectFloor = (int)floor(intersect); // get the floor of the double intersect point
+      intersectCeiling = (int)ceil(intersect); // get the ceiling of the double intersect point
+      if (!map->grid[row][intersectFloor]->isTransparent && !map->grid[row][intersectCeiling]->isTransparent) { // if both points aren't transparent
+        return false;
+      }
+    }
+  }
+  return true;
 }

@@ -53,6 +53,8 @@ map_t* maps_new(char* mapTextAddress);
 */
 char* maps_basegrid(map_t* map);
 
+char* maps_visiblebasegrid(map_t* map, int row, int col);
+
 /** maps_spectatorgrid
  * 
  * Renders the map into the ascii string to pass to the spectator client
@@ -105,6 +107,10 @@ int maps_getRows(map_t* map);
  * Or 0 if invalid map struct
 */
 int maps_getCols(map_t* map);
+
+int maps_getXrange(map_t* map);
+
+int maps_getYrange(map_t* map);
 
 /** maps_getMapNode
  * 
@@ -163,6 +169,8 @@ void maps_setMapNodeItem(mapNode_t* node, char item);
  *  valid void* type in the mapNode (player or gold)
 */
 void maps_setMapNodeType(mapNode_t* node, void* type);
+
+bool maps_ifHallwayNode(mapNode_t* node);
 
 /** maps_isVisible
  * 

@@ -1,0 +1,39 @@
+# Makefile for CS50 Nuggets maps
+#   Builds and compiles all the map structs and methods into a library.
+#
+# Wall Street Djournal, CS50 Nuggets 23W
+
+# object files, and the target library
+OBJS = server.o
+LIBS = ../mapsandvis/maps.a ../player/player.a ../support/support.a ../libcs50/libcs50-given.a 
+PLAYERLIB = ../player
+MAPSLIB = ../mapsandvis
+SUPPORTLIB = ../support
+CS50LIB = ../libcs50
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(PLAYERLIB) -I$(MAPSLIB) -I$(SUPPORTLIB) -I$(CS50LIB)
+LIBFLAGS = -lm
+CC = gcc
+MAKE = make
+
+.PHONY: all server clean
+
+all:
+	make -C ../player
+	make -C ../mapsandvis
+	make server
+
+server: server.o
+	$(CC) $(CFLAGS) server.o $(LIBS) $(LIBFLAGS) -o server
+
+# Dependencies: object files depend on header files
+server.o: server.h
+	$(CC) $(CFLAGS) server.c $(LIBFLAGS) -c -o server.o
+
+# clean up after our compilation
+clean:
+	rm -f ../player/player.a
+	rm -f ../mapsandvis/maps.a
+	rm -f server
+	rm -f core
+	rm -f *~ *.o
+	rm -rf *.dSYM

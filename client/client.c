@@ -304,7 +304,7 @@ void handleGrid(const char* message) {
 	// prompt the user to resize the screen and continue once they do
 	while(screenWidth < (gridWidth + 1) || screenHeight < (gridHeight + 1)) {
 		// print resize message as status
-		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1);
+		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
 		
 		char key = getch();
 
