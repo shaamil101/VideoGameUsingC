@@ -35,6 +35,11 @@
  */
 void* mem_assert(void* p, const char* message);
 
+/**************** mem_assert_const **************************/
+/* Identical to mem_assert, but suitable for p declared const.
+ */
+const void* mem_assert_const(const void* p, const char* message);
+
 /**************** mem_malloc_assert() ****************/
 /* Like malloc() but track the number of successful allocations,
  * and, if response is NULL, print error and die.

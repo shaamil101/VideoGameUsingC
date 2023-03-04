@@ -44,13 +44,14 @@ The *client* acts in one of two modes:
 
 1. *main*, recieves input when client is called from the command line, calls *parseArgs*, calls *startClient*, calls *message_loop*, calls *message_done*, and initializes a client data structure.
 2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not.
-3. *handleInputs* function used by message_loop for handling key inputs
-4. *handleMessage* function used by message_loop for handling the messages
-5. *handleQuit* handles the quit message
-6. *handleGold* handles the gold message
-7. *handleGrid* handles the grid message
-8. *handleDisplay* handles the display message
-9. *handleError* handles the error message
+3. *startClient* sets nCurses up and initializes the network
+4. *handleInputs* function used by message_loop for handling key inputs
+5. *handleMessage* function used by message_loop for handling the messages
+6. *handleQuit* handles the quit message
+7. *handleGold* handles the gold message
+8. *handleGrid* handles the grid message
+9. *handleDisplay* handles the display message
+10. *handleError* handles the error message
  
 ### Pseudo code for logic/algorithmic flow
 
@@ -257,6 +258,7 @@ The server should store what gridpoints have been viewed by the player, and the 
  4. *maps_playergrid*, converts the grid struct into a text representation of the map with only what a given player has seen, and only visible gold
  5. *maps_getRows*, returns the number of rows of the grid
  1. *maps_getCols*, returns the number of columns of the grid
+ 1. *maps_getGridpoint*, returns the char gridpoint at a given row and column
  1. *isVisible*, private that returns whether or not a point is visble from another point on the base map
  6. *maps_getVisiblePoints*, returns a list of points visible from a certain point
  7. *maps_getRandomGridpoint*, returns a random, valid (empty room) gridpoint
@@ -301,6 +303,10 @@ The server should store what gridpoints have been viewed by the player, and the 
 #### maps_getCols
 
 	return number of columns of grid
+
+#### maps_getGridpoint
+
+	return char at a given row and column of the grid
 
 #### maps_getVisiblePoints
 

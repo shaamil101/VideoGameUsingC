@@ -25,13 +25,25 @@ static int nfreenull = 0;       // number of free(NULL) calls
 /**************** mem_assert ****************/
 /* see mem.h for description */
 void*
-mem_assert(void* p, const char* message)
+mem_assert(void* ptr, const char* message)
 {
-  if (p == NULL) {
+  if (ptr == NULL) {
     fprintf(stderr, "NULL POINTER: %s\n", message);
     exit (99);
   }
-  return p;
+  return ptr;
+}
+
+/**************** mem_assert_const ****************/
+/* see mem.h for description */
+const void*
+mem_assert_const(const void* ptr, const char* message)
+{
+  if (ptr == NULL) {
+    fprintf(stderr, "NULL POINTER: %s\n", message);
+    exit (99);
+  }
+  return ptr;
 }
 
 /**************** mem_malloc_assert() ****************/
@@ -39,7 +51,11 @@ mem_assert(void* p, const char* message)
 void*
 mem_malloc_assert(const size_t size, const char* message)
 {
-  void* ptr = mem_assert(malloc(size), message);
+  void* ptr = malloc(size);
+  if (ptr == NULL) {
+    fprintf(stderr, "Out of memory: %s\n", message);
+    exit (99);
+  }
   nmalloc++;
   return ptr;
 }

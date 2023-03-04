@@ -9,9 +9,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <player.h>
-#include <mem.h>
-#include <../support/message.h>
+#include <ctype.h>
+#include "player.h"
+#include "mem.h"
+#include "message.h"
 
 typedef struct player{
     int x;                        
@@ -27,32 +28,45 @@ typedef struct player{
 *
 * see player.h for more details
 */
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
-    if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int xRange, int yRange, char letterAssigned){
+    if (playerName && maxCharacters){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
+        char* name;
         if (strlen(playerName) > maxCharacters){
-            char* newName;
+            name = mem_calloc_assert(maxCharacters+1,sizeof(char),"Unable to allocate memory for playername");
             for (int i = 0; i < maxCharacters; i ++){
-                newName[i] = playerName[i];
+                name[i] = playerName[i];
             }
-            playerName = newName;
+        } else {
+            name = mem_calloc_assert(maxCharacters+1,sizeof(char),"Unable to allocate memory for playername");
+            strcpy(name, playerName);
         }
+        playerNew->realName = name;
         playerNew->letterAssigned = letterAssigned;
-        playerNew->realName = mem_malloc(sizeof(char)*maxCharacters);
-        playerNew->realName = playerName;
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
-        playerNew->seenMap = mem_malloc((totalRows * totalCollumns)*sizeof(bool));
-        playerNew->x = NULL; 
-        playerNew->y = NULL; 
+
+        bool** seenMap = mem_calloc_assert(yRange,sizeof(bool*), "unable to allocate memory for player->seenMap");
+        for (int i = 0; i < yRange; i++) {
+            seenMap[i] = mem_calloc_assert(xRange,sizeof(bool), "unable to allocate memory for player->seenMap");
+            for (int j = 0; j < xRange; j++) {
+                seenMap[i][j] = false;
+            }
+        }
+        playerNew->seenMap = seenMap;
+        playerNew->x = 0; 
+        playerNew->y = 0; 
         return playerNew;
     }
     return NULL;
 }
 
-void player_delete(player_t* player){
+void player_delete(player_t* player, int yRange){
     if (player){ //null check 
+        for (int i = 0; i < yRange; i++) {
+            mem_free(player->seenMap[i]);
+        }
         mem_free(player->seenMap); //frees 2d array
         mem_free(player->realName); //frees char string 
         mem_free(player); //frees player object 
@@ -84,11 +98,20 @@ int player_getJustCollected(player_t* player){
     return -1;
 }
 
-void player_addSeenMap(player_t* player, int collumn, int row, bool state){
+void player_setJustCollected(player_t* player, int justCollected)
+{
+    if (player != NULL && justCollected >= 0) {
+        player->justCollected = justCollected;
+    }
+    return;
+}
+
+void player_addSeenMap(player_t* player, int x, int y, bool state){
+    int row = y;
+    int collumn = x;
+
     if (player){//null check
-        bool temp = player->seenMap[collumn][row];
-        temp = state;
-        
+        player->seenMap[row][collumn] = state;
     }
 }
 
@@ -137,7 +160,15 @@ char player_getLetterAssigned(player_t* player){
     if (player){
         return player->letterAssigned;
     }
-    return NULL;
+    return '\0';
+}
+
+void player_setLetterAssigned(player_t* player, char letter)
+{
+    if (player != NULL && isupper(letter)){
+        player->letterAssigned = letter;
+    }
+    return;
 }
 
 addr_t player_getIP(player_t* player){
