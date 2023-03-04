@@ -147,6 +147,8 @@ void startClient(client_t* client) {
 	mem_free(serverMessage);
 	// refresh the display
 	refresh();
+
+	log_v("Client started");
 }
 
 /**************** handleInputs() ****************/
@@ -238,7 +240,6 @@ void handleQuit(const char* message) {
 	char* copy = mem_assert(mem_malloc(strlen(message)+1), "allocating for handle quit message copy");
 	strcpy(copy, message);
 	char* status = copy + strlen("QUIT ");
-
 	// log status message to stderr
 	log_s("%s\n", status);
 	// free the copy

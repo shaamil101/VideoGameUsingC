@@ -28,8 +28,7 @@ typedef struct game {
   int goldCollected;             
   int goldLeft; 
   addr_t spectator; //Spectator address
-  grid_t* mainGrid;  //Stores the main grid
-  int goldPiles[numberOfRows][numberOfColumns]; //stores the locations of gold piles
+  grid_t* mainGrid;  //Stores the m
   int numberOfRows;
   int numberOfColumns;
   player_t* players[MaxPlayers]; //array of player struct
@@ -37,32 +36,149 @@ typedef struct game {
   
 } game_t;
 
+typedef struct player {
+  int row;                         // row
+  int col;                         // column 
+  addr_t IP;                       // IP address
+  char realName[MaxNameLength + 1];
+  char alias;                       // letter assigned
+  int gold;                        // gold in purse
+  int justCollected;
+  grid_t* seenGrid;
+} player_t;
+
+```c
+typedef struct spectator
+{
+        addr_t address;
+} spec_t;
+```
+Data structures that holds gold pile amount and location and number of gold piles
+
+```c
+
+typedef struct gold_pile
+{
+  int amount;
+  int x;
+  int y;
+} gold_pile_t;
+
+typedef struct gold
+{
+  gold_pile_t* piles;
+  int num_piles;
+} gold_t;
+
 ```
 ### Definition of function prototypes
 
-A function to parse the command-line arguments, initialize the game struct, initialize the message module, and create random behavior based on whether or not the seed phrase has been passed.
-
-```c
-static int parseArgs(const int argc, char* argv[]);
+```C
+void server_dropGold(map_t *map, int num_piles, int gold_amount);
+bool handleMessage(void *arg, const addr_t from, const char *message);
+gold_pile_t *new_gold_pile(int size);
+void delete_gold_pile(gold_pile_t *pile);
+void playerTable_delete(playerTable_t *playerTable, int yRange);
+spec_t *spectator_new(addr_t address);
+playerTable_t *playerTable_new();
+game_t *gamenode_new(int num_nuggets, map_t *curr_map);
+void send_player_display(game_t *game, player_t *player, addr_t from);
+void send_player_gold(game_t *game, player_t *player, addr_t from);
+void send_spectator_gold(game_t *game, addr_t from);
+char *createGoldMessage(map_t *map, player_t *player);
+player_t *player_set(map_t *map, player_t *player);
+char getCharacterBasedOnIndex(int i);
+void move_left(map_t *map, player_t *player);
+void move_right(map_t *map, player_t *player);
+void move_up(map_t *map, player_t *player);
+void move_down(map_t *map, player_t *player);
+void move_diag_down_right(map_t *map, player_t *player);
+void move_diag_down_left(map_t *map, player_t *player);
+void move_diag_up_right(map_t *map, player_t *player);
+void move_diag_up_left(map_t *map, player_t *player);
+void move_diag_up_right_MAX(map_t *map, player_t *player);
+void move_diag_up_left_MAX(map_t *map, player_t *player);
+void move_diag_down_right_MAX(map_t *map, player_t *player);
+void move_diag_down_left_MAX(map_t *map, player_t *player);
+void move_up_MAX(map_t *map, player_t *player);
+void move_right_MAX(map_t *map, player_t *player);
+void move_left_MAX(map_t *map, player_t *player);
+void move_down_MAX(map_t *map, player_t *player);
+bool moveable(mapNode_t *node);
+void server_dropPlayer(map_t *map, player_t *player);
+void player_move(map_t *map, player_t *player, int new_x, int new_y);
+char *game_over_summary();
+player_t *searchByAddress(addr_t from);
+bool isNumber(char number[]);
+void free_everything(game_t *game);
+void make_visible(player_t *player, map_t *map);
+void send_spectator_display(game_t *game, addr_t from);
 ```
 
-#### `parseArgs`:
+### Detailed Psuedocode
 
-	validate commandline
-	verify map file can be opened for reading
-	if seed provided based on no. of arguments
-		verify it is a valid seed number
-		seed the random-number generator with that seed
+
+Main performs a series of checks and initializes the necessary components before starting the game. It validates the number of arguments passed to the program, initializes the logging file, and sets up the game environment based on the arguments provided. Finally, it starts the server and waits for clients to connect. Once the game is complete, it cleans up any resources used by the program and exits.
+
+```c
+int main(int argc, char *argv[])
+```
+
+#### `main`:
+
+	The `main` function takes two arguments, `argc` and `argv`. 
+
+	It first checks if the number of arguments is less than 2 or greater than 3. If the number of arguments is invalid, it prints an error message and returns 1. 
+
+	If the number of arguments is valid, the function:
+    - Initializes a variable `map_pathname` to the path of the map file, which is the second argument. 
+    - Initializes a logging file 
+    - Checks if a seed value has been provided as the third argument. 
+
+    If a seed value is provided, it:
+        - Checks that the seed is a positive integer 
+        - Sets the seed for the random number generator. 
+
+    Else
+        - Sets the seed to the current process ID.
+
+	Next, the function:
+    - Loads the map from the file 
+    - Drops gold nuggets on the map 
+    - Initializes the game and the network
+
+	The function then:
+    - Determines a port number 
+    - Announces the port number
+    - Creates an internet address and initializes it in a call to `message_setAddr`
+    - Enters a loop to handle messages using the `message_loop` function and the `handleMessage` function as the message handler.
+    - Prints a thank-you message when the loop is exited.
+
+
+A function called to drop random piles of gold in the map
+```c
+void server_dropGold(map_t *map, int num_piles, int gold_amount);
+```
+
+#### `server_dropGold`:
+
+	Get X and Y ranges by calling the map module
+	Count the amount of open spaces where gold can go
+	Run a random function in the range of open spaces to determine gold location
+	Check if the item at that coordinate is an empty spot
+		Then switch the empty spot for a gold pile and call new gold pile
+		Also set the map node type to be a gold type
 	else
-		seed the random-number generator with getpid()
+		Place into a new spot instead 
+	Decrement the number of piles left and the open spaces available at the end
 		
-A function for sending and receiving messages a. play, When the message type is to play, initalize new player characteristics b. spectate, Allow spectator to view the game c. quit, Handle quitting message with table summer d. key, Handle multiple key inputs
+This function  is a utility function that allows a server to handle incoming messages from clients and take appropriate actions based on the contents of the message.
 
 ```c
-bool server_message(void* arg, const addr_t from, const char* message);
+bool handleMessage(void *arg, const addr_t from, const char *message)
 ```
 
-#### `server_message`:
+#### `handleMessage`:
 
 	Parses message by message type
 	if message type is 'PLAY':
@@ -80,7 +196,7 @@ bool server_message(void* arg, const addr_t from, const char* message);
 		Reply with 'GRID' and 'GOLD' message'
 		continue to update this spectator with complete display in loop
 	if message type is 'QUIT':
-		calls player_delete
+		calls server_removePlayer
 	if message type is 'KEY':
 		validate whether key is allowed
 		if key is allowed:

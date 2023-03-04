@@ -25,8 +25,8 @@ all:
 server: server.o
 	$(CC) $(CFLAGS) server.o $(LIBS) $(LIBFLAGS) -o server
 
-# Dependencies: object files depend on header files
-server.o: server.h
+# Dependencies: object files depend on c files
+server.o: server.c
 	$(CC) $(CFLAGS) server.c $(LIBFLAGS) -c -o server.o
 
 # clean up after our compilation
