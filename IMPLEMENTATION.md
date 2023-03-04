@@ -248,7 +248,7 @@ typedef struct client {
 
 ### Definition of function prototypes
 ```c
-static int parseArgs(const int argc, char* argv[]);
+static client_t* parseArgs(const int argc, char* argv[]);
 void startClient(client_t* client);
 bool handleInputs(void* arg);
 bool handleMessage(void* arg, const addr_t addr, const char* message);
@@ -257,6 +257,7 @@ void handleGold(const char* message, client_t* client);
 void handleGrid(const char* message);
 void handleDisplay(const char* message);
 void handleError(const char* message);
+void handleInvalidMessage();
 ```
 
 ### Detailed pseudo code
@@ -273,17 +274,21 @@ void handleError(const char* message);
 
 
 #### `parseArgs`:
-
-	if there not exactly 2 or 3 arguments
-  		print error to stderr
+	allocate memory for client
+	if there not exactly 3 or 4 arguments
+  		log error to stderr
 		exit non-zero
 	if the port number is not retrievable using message_init
-		print error to stderr
+		log error to stderr
 		exit non-zero
 	if unsuccessfull set server address using message_setAddr
-		print error to stderr
+		log error to stderr
 		exit non-zero
-	else return a 1 if there is a player name and 0 if not
+	if there are 3 args
+		set player name to null and isSpectator to true
+	if there are 4 args 
+		set player name to fourth arg and isSpectator to false
+	return the client
 
 
 #### `startClient`:
@@ -324,7 +329,7 @@ void handleError(const char* message);
 
 #### `handleDisplay`:
 
-	updates string based on message received by server
+	updates ncurses display based on message received by server
 
 
 #### `handleGold`:
@@ -338,6 +343,13 @@ void handleError(const char* message);
 
 	prints an error message
 	refresh
+
+#### `handleInvalidMessage`:
+
+	print error status message to display
+	log error status message
+	redraw display
+	
 
 ---
 
