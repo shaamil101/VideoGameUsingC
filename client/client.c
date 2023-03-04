@@ -53,21 +53,16 @@ void handleInvalidMessage();
 int main(const int argc, char* argv[]) {
 	// start the log module
 	log_init(stderr);
-
 	// parse the arguments
 	client_t* client = parseArgs(argc, argv);
-
-	if (client != NULL) {
-		startClient(client);
-
-		message_loop(client, 0, NULL, handleInputs, handleMessage);
-		message_done();
-
-		mem_free(client);
-	} else {
-		mem_free(client);
-		return 1;
-	}
+	// start the client
+	startClient(client);
+	// loop and listen for user key strokes
+	message_loop(client, 0, NULL, handleInputs, handleMessage);
+	message_done();
+	// free the client
+	mem_free(client);
+	return 0;
 }
 
 /**************** parseArgs() ****************/
@@ -88,18 +83,18 @@ static client_t* parseArgs(const int argc, char* argv[]) {
 	// if incorrect number of arguments given log and return
 	if (argc < 3 || argc > 4) {
 		log_s("%s: Usage: ./client hostName port [playerName]\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if port number can't be fetched log and return
 	int clientPort = message_init(NULL);
 	if (clientPort == 0) {
 		log_s("%s: Error: not able to fetch client port number\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if server address can't be set log and return
 	if (!message_setAddr(argv[1], argv[2], &(client->serverAddress))) { 
 		log_s("%s: Error: failed to set server address\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if the are only 3 args client is a spectator and client object is updated
 	if (argc == 3) {
@@ -133,14 +128,14 @@ void startClient(client_t* client) {
 
 	char* serverMessage;
 
-	// if the user is a spectator
+	// if the user is a spectator send a SPECTATE message to server
 	if (client->isSpectator) {
 		serverMessage = mem_assert(mem_malloc(strlen("SPECTATE") + 1), "allocating server message memory");
 
 		strcpy(serverMessage, "SPECTATE");
 		message_send(client->serverAddress, serverMessage);
 
-	// if the user is a player
+	// if the user is a player send a PLAY message to the server
 	} else {
 		serverMessage = mem_assert(mem_malloc(strlen("PLAY ") + strlen(client->playerName) + 1), "allocating server message memory");
 
@@ -150,8 +145,6 @@ void startClient(client_t* client) {
 
 	// free message memory
 	mem_free(serverMessage);
-	serverMessage = NULL;
-
 	// refresh the display
 	refresh();
 
@@ -240,6 +233,8 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
  * Output: none
 */
 void handleQuit(const char* message) {
+	// end ncurses
+
 	nocbreak();
 	endwin();
 	// build status message
@@ -248,7 +243,7 @@ void handleQuit(const char* message) {
 	char* status = copy + strlen("QUIT ");
 	// log status message to stderr
 	log_s("%s\n", status);
-
+	// free the copy
 	mem_free(copy);
 }
 
@@ -305,7 +300,7 @@ void handleGrid(const char* message) {
 	// prompt the user to resize the screen and continue once they do
 	while(screenWidth < (gridWidth + 1) || screenHeight < (gridHeight + 1)) {
 		// print resize message as status
-		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
+		mvprintw(0, 0, "Your display window is too small. It must be allow for least %d characters wide and %d characters high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
 		
 		char key = getch();
 

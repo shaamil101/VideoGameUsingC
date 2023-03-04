@@ -15,45 +15,11 @@ Shaamil is writing server program
 Jake is writing player module
 Jack is writing client program
 
-## Player
-
-> Teams of 3 students should delete this section.
-
-### Data structures
-
-> For each new data structure, describe it briefly and provide a code block listing the `struct` definition(s).
-> No need to provide `struct` for existing CS50 data structures like `hashtable`.
-
-### Definition of function prototypes
-
-> For function, provide a brief description and then a code block with its function prototype.
-> For example:
-
-A function to parse the command-line arguments, initialize the game struct, initialize the message module, and (BEYOND SPEC) initialize analytics module.
-
-```c
-static int parseArgs(const int argc, char* argv[]);
-```
-### Detailed pseudo code
-
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> For example:
-
-#### `parseArgs`:
-
-	validate commandline
-	initialize message module
-	print assigned port number
-	decide whether spectator or player
-
----
-
 ## Server
 
 ### Data structures
 
-We need two primary data structures. The first will be for the entire game and another player structure with the player attributes. The first structure is the game structure with the following elements:
+We need one primary data structure for the entire game logic. The game structure has the following elements:
 
 ```c
 typedef struct game
@@ -109,7 +75,6 @@ typedef struct gold
   gold_pile_t* piles;
   int num_piles;
 } gold_t;
-
 ```
 ### Definition of function prototypes
 
@@ -397,6 +362,142 @@ bool moveable(mapNode_t *node)
 	If "c" is not equal to any of these characters, return false
 
 
+A function that accepts a player and removes it by calling the remove player 
+
+```c
+bool handlePlay(void* arg, const addr_t from, const char* name)
+```
+
+#### `handlePlay`:
+
+	if the game is full
+        send a quit message back to the player
+    if the name is Empty
+        send a quit message back
+    otherwise
+        create a new player by calling the player module function
+        copy the player name in to the real name
+        initialize gold related variable
+        drop the player on to the grid, update the player location and the master grid
+        increment the number of players in the game
+        send update to all clients
+
+A function that accepts a player and removes it by calling the remove player 
+
+```c
+bool handleKEY(void* arg, const addr_t from, const char* key);
+```
+
+#### `handleKey`:
+
+	if the key is Q
+        call handleQUIT with the IP
+        return flase to continue the loop
+    otherwise
+        depending on the key
+            for lower case
+                call player_move with new location
+            for Upper case
+                call player_move with new location until return true
+    if no gold left
+        return true
+    else
+        return false
+
+A function that drops random piles of gold with random counts
+
+```c
+static void server_dropGold(void);
+```
+
+#### `server_dropGold`:
+
+	generate a random number for the number of goldpiles
+    for each pile
+        generate random location update the mastergrid
+        while that location is a empty room spot
+            generate a new random location
+        update the 2d integer array for the gold piles
+
+A function that drops players in random locations
+
+```c
+static void server_dropPlayer(player_t* player);
+```
+
+#### `server_dropPlayer`:
+
+	Generate random valid x location
+	Generate random valid y location
+	Set x location by calling player module
+	Set y location by calling player module
+
+
+A function that process player movement by checking the new positions the player wants to move and acting accordingly
+
+```c
+bool player_move(player_t* player, int new_row, int new_col);
+```
+
+#### `player_move`:
+
+	if the new location is allowed to move to 
+        if the new location is a player
+            switch positions
+            update grid
+            send update to all clients
+            return false
+        if the new location is gold
+            update the new location of the player
+            update grid 
+            call player add gold to pick up gold
+            send update to all clients
+        else (location is just empty room spot)
+            update the new location of the player
+            replace the old location with the original character
+            update grid
+            send update to all clients
+            return false
+    else
+        return true
+
+A function that process the function of creating a new spectator when needed and calling the message module
+```c
+bool handleSpectate(void* arg, const addr_t from);
+```
+
+#### `handleSpectate`:
+
+	 if there exists one spectator
+        send a quit message to the existing one
+    store the spectator IP in to game struct (auto replace if needed)
+    send a grid info message
+    update all clients
+    return false
+
+A function that ends the game by printing a tabular form of results
+```c
+static void server_gameOver(void);
+```
+
+#### `server_gameOver`:
+
+	Print out a summary of each player and the respecitve gold nuggets collected in a tabular form 
+
+A function that ends the game by printing a tabular form of results
+```c
+static void server_update_all_clients(void);
+```
+
+#### `server_update_all_clients`:
+
+	if there is a spectator
+			send gold info 
+			send the master grid
+		iterate through every player
+			send gold info 
+			reset the just picked up gold to zero
+			call set_visibility to get the visibilty grid and send
 ---
 
 ## Client
@@ -416,7 +517,7 @@ typedef struct client {
 
 ### Definition of function prototypes
 ```c
-static int parseArgs(const int argc, char* argv[]);
+static client_t* parseArgs(const int argc, char* argv[]);
 void startClient(client_t* client);
 bool handleInputs(void* arg);
 bool handleMessage(void* arg, const addr_t addr, const char* message);
@@ -425,6 +526,7 @@ void handleGold(const char* message, client_t* client);
 void handleGrid(const char* message);
 void handleDisplay(const char* message);
 void handleError(const char* message);
+void handleInvalidMessage();
 ```
 
 ### Detailed pseudo code
@@ -441,17 +543,21 @@ void handleError(const char* message);
 
 
 #### `parseArgs`:
-
-	if there not exactly 2 or 3 arguments
-  		print error to stderr
+	allocate memory for client
+	if there not exactly 3 or 4 arguments
+  		log error to stderr
 		exit non-zero
 	if the port number is not retrievable using message_init
-		print error to stderr
+		log error to stderr
 		exit non-zero
 	if unsuccessfull set server address using message_setAddr
-		print error to stderr
+		log error to stderr
 		exit non-zero
-	else return a 1 if there is a player name and 0 if not
+	if there are 3 args
+		set player name to null and isSpectator to true
+	if there are 4 args 
+		set player name to fourth arg and isSpectator to false
+	return the client
 
 
 #### `startClient`:
@@ -492,7 +598,7 @@ void handleError(const char* message);
 
 #### `handleDisplay`:
 
-	updates string based on message received by server
+	updates ncurses display based on message received by server
 
 
 #### `handleGold`:
@@ -507,25 +613,39 @@ void handleError(const char* message);
 	prints an error message
 	refresh
 
+#### `handleInvalidMessage`:
+
+	print error status message to display
+	log error status message
+	redraw display
+	
+
 ---
 
-## Maps / Visibility Module (named maps)
+## Maps / Visibility Module (named mapsandvis)
 
-The maps / visibility module provides a map data structure and a matrixIndex data structure and methods to load and validate maps and overlay with players and gold. The map will be stored as a 2D-array of characters, and have integers for how tall (number of rows) and wide (number of columns) it is. The matrixIndex structure just wraps two integers for a row and a column index into a 2D array.
+ The maps / visibility module provides a map data structure and a mapNode data structure and methods to load and validate maps and overlay with players and gold.
+ 
+ The map struct will have a 2D-array of mapNodes, and have integers for how tall (number of rows) and wide (number of columns) it is. 
+ 
+ The matrixNode structure holds info about the room character at that gridpoint, the type of point in the node (player, gold, base map), and booleans for whether or not it's transparent and a hallway.
 
-### Data 
+### Data structures
 
 ```C
-typedef struct map {
-	char** grid;
+typedef struct mapNode{
+  char item; // map char
+  void* type; // type of item
+  bool isTransparent;
+  bool isHallway;
+} mapNode_t;
+
+typedef struct map{
 	int numRows;
 	int numCols;
+  int totalGoldLeft;
+  mapNode_t*** grid; //2d array of mapNode_t pointers
 } map_t;
-
-typedef struct matrixIndex {
-	int row;
-	int col;
-} matrixIndex_t;
 ```
 
 ### Definition of function prototypes
@@ -533,18 +653,28 @@ typedef struct matrixIndex {
 ```C
 map_t* maps_new(char* mapTextAddress);
 char* maps_basegrid(map_t* map);
-char* maps_fullgrid(map_t* map, PLAYER_T* playerList, GOLD_T* goldList);
-char* maps_playergrid(map_t* map, PLAYER_T* player, GOLD_T* goldList);
+char* maps_spectatorgrid(map_t* map);
+char* maps_playergrid(map_t* map, player_t* player);
+bool maps_isVisible(map_t* map, int playerX, int playerY, int testX, int testY);
 int maps_getRows(map_t* map);
 int maps_getCols(map_t* map);
-char maps_getGridpoint(map_t* map, int row, int col);
-static bool isVisible(map_t* map, matrixIndex_t* playerPosition, matrixIndex_t* testPosition);
-matrixIndex_t* maps_getVisiblePoints(map_t* map, PLAYER_T* player);
-matrixIndex_t* maps_getRandomGridpoint(map_t* map);
+int maps_getXrange(map_t* map);
+int maps_getYrange(map_t* map);
+mapNode_t* maps_getMapNode(map_t* map, int x, int y);
+char maps_getMapNodeItem(mapNode_t* node);
+void* maps_getMapNodeType(mapNode_t* node);
+void maps_setMapNodeItem(mapNode_t* node, char item);
+void maps_setMapNodeType(mapNode_t* node, void* type);
+void maps_setTotalGoldLeft(map_t* map, int totalGoldLeft);
+int maps_getTotalGoldLeft(map_t* map);
 void maps_delete(map_t* map);
-matrixIndex_t* maps_newMatrixIndex(int row, int col);
-bool compare_matrixIndex(matrixIndex_t* indexA, matrixIndex_t* indexB);
-void maps_deleteMatrixIndex(matrixIndex_t* index);
+bool maps_isHallwayNode(mapNode_t* node);
+static mapNode_t* mapNodeNew(char item);
+static void mapNodeDelete(mapNode_t* node);
+static bool firstAndEighthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool secondAndThirdOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool fourthAndFifthOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+static bool sixthAndSeventhOctant(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
 ```
 
 ### Detailed pseudo code
@@ -564,10 +694,10 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 	return the map struct
 
 #### maps_basegrid
-`maps_blasegrid` renders the map into the string to pass to the client without any gold or players on it
+`maps_basegrid` renders the map into the string without any gold or players on it
 
 	validate args
-	allocate memory for string holding grid
+	allocate memory for string holding grid + 1 for termianting null
 	for each row r in the map (starting from 0)
 		for each column c in the map (starting from 0)
 			add char at that index of the map_t->grid 2d array to the string
@@ -575,9 +705,9 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 	make last newline a terminating null instead
 	return the string
 
-#### maps_fullgrid
+#### maps_spectatorgrid
 
-`maps_fullgrid` renders the map into the string to pass to the client with all the gold and players on it
+`maps_spectatorgrid` renders the map into the string to pass to the server client with all the gold and players on it
 
 	validate args
 	create gold grid from gold list, a 2d array of integers with same dimensions as the map that has the amount of gold at that point (0 if no gold there)
@@ -591,76 +721,59 @@ void maps_deleteMatrixIndex(matrixIndex_t* index);
 			set the char at the row,col of the player to the char [A-Z] representing the player 
 
 
-	allocate memory for string holding grid
+	allocate memory for string holding grid + 1 for terminating null
 	for each row r in the map (starting from 0)
 		for each column c in the map (starting from 0)
-			if int at the gold grid is not 0
+			if gold
 				add '*' to the string
-			if char at the player grid is not NULL
-				add the player char to the string
-			else: add the normal map char at that index of the map_t->grid 2d array to the string
+			else if player
+				add player letter
+			else
+				add the normal map char at that index of the map_t->grid 2d array to the string
 		add a new line to the string (for next row)
 	make last newline a terminating null instead
 	return the string
 
 #### maps_playergrid
-`maps_playergrid` renders the map into the string to pass to the client with only the gridpoints, gold, and players visible to a given player.
+`maps_playergrid` renders the map into the string to pass to the client with only the map and a given player passed to it
 
-	validate args
-	create gold grid from gold list, a 2d array of integers with same dimensions as the map that has the amount of gold at that point (0 if no gold there)
-		initialize empty 2d array of ints
-		iterate through gold list
-			set the int at the row,col of the gold to the amount of gold it is
-	
-	create player grid from player list, a 2d array of chars with the same dimensions as the map
-		initialize the empty 2d array of chars
-		iterate through player list
-			set the char at the row,col of the player to the char [A-Z] representing the player 
-
-	create visibility grid from given player's visible points, 2d array of bools with same dims as map
-		initialize the empty 2d array of bools to all false
-		iterate through the visible points list,
-			set the bool at the row,col of the visible point to true
-
-	allocate memory for string holding grid
+	validate args (map and player can't be null)
+	get number of rows, columns in map
+	allocate memory for string holding grid + 1 for terminating null
 	for each row r in the map (starting from 0)
 		for each column c in the map (starting from 0)
-			if bool in the visibility grid is true
-				if int at the gold grid is not 0
-					add '*' to the string
-				if char at the player grid is not NULL
-					add the player char to the string
-				else: add the normal map char at that index of the map_t->grid 2d array to the string
+			if bool in the seen grid is true
+				if currently visible to player
+					write *, A-Z, or other blocks
+				else
+					write base blocks (empty room or hallway for gold or player)
 			else
-				add ' ' to the string
+				write empty space
 		add a new line to the string (for next row)
-	make last newline a terminating null instead
 	return the string
 
-#### maps_getRows
-`maps_getRows` returns the int number of rows in a map struct
+#### maps_isVisible
+`maps_isVisible` returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
 
-	validate args
-	return numRows int of given map struct
+For the octant cases, I'll just pass the map and playerX,Y and testX,Y points 
 
-#### maps_getCols
-`maps_getCols` returns the int number of cols in a map struct
-
-	validate args
-	return numCols int of given map struct
-	
-#### maps_getGridpoint
-Returns the char at the row, column index of a given map grid
-
-	validate args (valid map, non-negative row and column)
-	return char at that index
-
-#### isVisible
-`isVisible` is a private-to-the-module (static) method that returns a bool value for whether or not one point is visible from another point. It uses the method outlined in the CS50 nuggets assigment about taking the line between the two test points, and looking at the gridpoints the line intersects. If two of those gridpoints are 'opaque' (non-visible spaces), then the point isn't visible. Otherwise, it is. I'll define the player point as where we are looking from, and the test point as the point we're trying to view. I'll also define opaque characters as (' ' - | + #), i.e. anything but room space '.' 
-
+	set Xs to cols
+	set Ys to rows
 	validate args
 		make sure both points row and column values are equal to or less than the map row and column (and non-negative)
-	switch through 3 cases: vertical down line (change in columns is 0, change in rows is positive), vertical up line (change in columsn is 0, change in rows is negative), horizontal right line (change in rows is 0, change in columns is positive), horizontal left line (change in rows is 0, change in columns is negative), sloped right line (non-zero change in rows and columns, but change in columns is positive), sloped left line case (non-zero change in rows and columns, but change in columns is negative)
+
+	go through 13 cases:
+
+	Goes through 13 cases:
+  	same point as player
+  	vertical line: up or down
+  	horizontal line: left or right
+ 		perfectly diagonal line: up-right, up-left, down-right, down-left
+ 		sloped line: first and eigth octant (of coordinate quadrants), second and third, fourth and fifth, sixth and seventh octants
+
+	same point as player:
+		return true (visible to itself, sure)
+
 	vertical down line case:
 		get row difference between player and test point
 		for each gridpoint along the row (player position incremented by (1 to testpoint]
@@ -689,12 +802,36 @@ Returns the char at the row, column index of a given map grid
 			return false
 		return true (we've made it to the end of the line segement)
 
-	sloped right line case:
-		get the (float) slope of the line from player point to test point (change in rows divided by change in columns)
+	perfect diagonal cases:
+		for each row/col between player and test point
+			if gridpoint is opaque character
+				return false
+			increment/decrement each row/col depending on direction (four different directional cases)
+		return true
+
+	first and eighth octant:
+		call firstAndEighthOctant with map pointer, and player row, col and test row, col points
+
+	second and third octant:
+		call secondAndThirdOctant with map pointer, and player row, col and test row, col points
+
+	fourth and fifth octant:
+		call fourthAndFifthOctant with map pointer, and player row, col and test row, col points
+
+	sixth and seventh octant:
+		call sixthAndSeventhOctant with map pointer, and player row, col and test row, col points
+
+
+#### firstAndEighthOctant
+first and eighth octants:
+Args passed from isVisible, so we know they're good
+
+		calculate row/col differences
+		get the (double) slope of the line from player point to test point (change in rows divided by change in columns)
 		get column difference 
 		for each column between the player and test position (increment by 1 each time to go right)
-			get the (float) row value of the line by doing (player_point + (change in column index * slope))
-			if float is an integer:
+			get the (double) row value of the line by doing (player_point + (change in column index * slope))
+			if double is an integer:
 				if gridpoint is opaque character
 					return false
 			else:
@@ -703,60 +840,107 @@ Returns the char at the row, column index of a given map grid
 					return false
 		return true (we've made it to the end of the line segement)
 
-	sloped left line case:
-		get the (float) slope of the line from the player point to test point
+#### secondAndThirdOctant
+second and third octants:
+Args passed from isVisible, so we know they're good
+		
+		calculate row/col differences
+		get the (double) slope of the line from player point to test point (change in cols divided by change in rows)
+		get row difference 
+		for each row between the player and test position (decrement by 1 each time to go up)
+			get the (double) col value of the line by doing (player_point + (change in row index * slope))
+			if double is an integer:
+				if gridpoint is opaque character
+					return false
+			else:
+				with the integer col value rounded up and the integer col value rounded down,
+				if both are an opaque character
+					return false
+		return true (we've made it to the end of the line segement)
+
+#### fourthAndFifthOctant
+fourth and fifth octants:
+Args passed from isVisible, so we know they're good
+		
+		calculate row/col differences
+		get the (double) slope of the line from the player point to test point
 		get column difference
 		for each column between the player and test position (decrement by 1 each time to go left)
-			get the (float) row value of the line by doing (player_point + (change in column index * slope))
-			if float is an integer:
+			get the (double) row value of the line by doing (player_point + (change in column index * slope))
+			if double is an integer:
 				if gridpoint is opaque character
 					return false
 			else:
 				with the integer row value rounded up and the integer row value rounded down,
+				if both are an opaque character
+					return false
+		return true (we've made it to the end of the line segement)
+
+#### sixthAndSeventhOctant
+sixth and seventh octants:
+Args passed from isVisible, so we know they're good
+		
+		calculate row/col differences
+		get the (double) slope of the line from player point to test point (change in cols divided by change in rows)
+		get cols difference 
+		for each row between the player and test position (increment by 1 each time to go down)
+			get the (double) col value of the line by doing (player_point + (change in row index * slope))
+			if double is an integer:
+				if gridpoint is opaque character
+					return false
+			else:
+				with the integer col value rounded up and the integer col value rounded down,
 				if both are an opaque character
 					return false
 		return true (we've made it to the end of the line segement)
 					
 
-#### maps_getVisiblePoints
-`maps_getVisiblePoints` returns a list (array) of visible points for a base map for a player's position, using the static isVisible method. Caller must later free array.
+#### maps_getRows
+Takes in a map pointer and returns the num of rows stored
 
-	allocate memory for gridpoint array, of size num_rows*num_cols (max number of visible points)
-	keep track of index adding to array (start at 0)
-	for each row r in map
-		for each col c in map
-			if isVisible(player row, player col, r, c)
-				add gridpoint array
-				increment array index
-	return array
+#### maps_getCols
+Takes in a map pointer and returns the num of cols stored
 
-#### maps_getRandomGridpoint
-returns a random gridpoint from a map, using the rand() method. **Random module must be first initialized by the server seed with srand(seed or getPID).** The rand() method's integer range is 0 to 2147483647 (from stdlib.h), so if we take one of those random numbers moduloed with the number of rows and number of columns (which we can assume for user playability will be much less than that max int), then it will be a pretty random value. That won't hold up if we get modulus values that get near the magnitude of the max int, but we won't get there with the size maps we're dealing with.
+#### maps_getXrange
+Takes in a map pointer and returns the max x value (exclusive) in the grid (which is number of columns)
 
-	initialize new matrixIndex struct
-	set row of 2d index to (rand() % map->numRows)
-	set col of 2d index to (rand() % map->numCols)
-	return matrixIndex struct (must later be freed)
+#### maps_getYrange
+Takes in a map pointer and returns the max y value (exclusive) in the grid (which is number of rows)
+
+#### maps_getMapNode
+Takes in a map pointer and x and y position and gets the map node at that x and y (converts from x and y to rows and columns)
+
+#### maps_getMapNodeItem
+Takes in a map node pointer and returns the char item for that map node
+
+#### maps_getMapNodeType
+Takes in a map node pointer and returns the void* type for that map node
+
+#### maps_setMapNodeItem
+Takes in a map node pointer and char item and sets the char item for that map node
+
+#### maps_setMapNodeType
+Takes in a map node pointer and void* type and sets the void* type for that map node
+
+#### maps_setTotalGoldLeft
+Takes in a map pointer and integer totalgold left and sets the integer totalgoldleft for the map struct
+
+#### maps_getTotalGoldLeft
+Take in a map pointer and return integer value for totalGoldLeft in map struct
+
+#### maps_ishallwayNode
+Returns the bool for whether or not a node is a hallway, stored in node struct
 
 #### maps_delete
 `maps_delete` frees all the memory wrapped inside a map module, which is really just the 2d array and then the struct itself.
 
-	free the 2d array grid in the map struct
+	validate args
+	for each row in map grid
+		for each col in map grid
+			free node at map grid
+		free row in map grid
+	free the map grid
 	free the map struct
-
-#### maps_newMatrixIndex
-Allocates memory for and initializes a new matrix index struct
-
-	validate arg (no negative numbers, return null if so)
-	assert / allocate memory for a matrixIndex struct
-	set the row to the given row
-	set the col to the given col
-	return pointer to the struct
-
-#### maps_deleteMatrixIndex
-free the memory for a matrix index struct
-
-	call free() on the struct if not null
 ---
 
 ## Player
@@ -785,12 +969,17 @@ player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters
 void player_delete(player_t* player);
 void player_addGold(player_t* player, int* gold);
 int player_getGold(player_t* player);
+int player_getJustCollected(player_t* player);
+void player_setJustCollected(player_t* player, int justCollected);
 void player_addSeenMap(player_t* player, int* row, int* collumn);
 bool** player_getSeenMap(player_t* player);
 void player_setXPosition(player_t* player, int* xPos);
 int player_getXPosition(player_t* player);
 void player_setYPosition(player_t* player, int* yPos);
 int player_getYPosition(player_t* player);
+char* player_getRealName(player_t* player);
+char player_getLetterAssigned(player_t* player);
+void player_setLetterAssigned(player_t* player, char letter);
 char* player_getIP(player_t* player);
 ```
 
@@ -798,31 +987,35 @@ char* player_getIP(player_t* player);
 
 #### player_new
 
-Allocates memory for a new player object, instantiates values for gold, creates visibility map, gets random location for player, stores the players name (truncates if necessary), sets the ipAddress as the address given
+Allocates memory for a new player object, instantiates and allocates memory when necessary for values that player holds
 
 	validate args 
-	allocate space for new player object
-	if player name is not less than max length 
-		truncate length of name given to have no more than maxCharacters
-		set name to truncated name
-	set name as given name
-	allocate memory for real name
-	set realName as name
-	sets ipAddress as ipAddress given
-	set gold to 0
-	allocate space for visibility map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays)
-	if map is instantiated
-		get random gridpoint from the map 
-		set x to collumn from gridpoint
-		set y to row from gridpoint
-	return player object
+		allocate space for new player object
+		if player name is not less than max length 
+			allocate space for name
+			truncate length of name given to have no more than maxCharacters and store in name
+			
+		else
+			allocate space for name
+			set name to name given 
+		set playername as given name
+		set letter assigned as letter assigned given
+		sets ipAddress as ipAddress given
+		set gold to 0
+		set just collected to 0
+		allocate space for bool pointer seen map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays). Setting all elements within map as false
+		set x to 0
+		set y to 0
+		return player object
+	return NULL
 
 #### player_delete
 
 frees the player object and the values stored within it 
 
 	if player is valid
-		free visability map
+		free each array in the seen map
+		free seen map 
 		free realName 
 		free player
 	return
@@ -848,6 +1041,21 @@ returns an integer representing the players gold
 		return gold 
 	return null
 
+#### player_getJustCollected
+
+Returns the players just Collected
+
+	if player is valid
+		return the players just collected value 
+	return -1
+
+#### player_setJustCollected
+
+Aets the just collected value given an integer 
+
+	if player does not equal null and just collected is greater than or equal to 0
+		set player just collected as interger given 
+	return 
 
 #### player_addSeenMap
 
@@ -880,7 +1088,7 @@ Returns the players current x position on the map
 	if player is valid
 		get players x position 
 		return x position 
-	return null
+	return -1
 
 #### player_setYPosition
 Sets the players current y position on the map. Server module checks if y is in range. 
@@ -895,7 +1103,7 @@ Returns the players current y position on the map
 	if player is valid
 		get players y position 
 		return y position 
-	return null
+	return -1
 
 #### player_getRealName
 
@@ -906,6 +1114,23 @@ Returns the players real name (truncated version less than max length) given at 
 		return real name 
 	return null
 
+
+### player_getLetterAssigned
+
+Returns the players letter assigned (char)
+
+	if player is valid 
+		get and return the letter assigned 
+	return null
+
+### player_setLetterAssigned
+
+ Sets the players letter assigned to the value given
+
+	if player is valid and the letter is uppercase
+		set the letter as the one given 
+	return null
+
 ### player_getIP
 
 Returns the players IP address
@@ -913,7 +1138,7 @@ Returns the players IP address
 	if player is valid
 		get players ip address
 		return ip address
-	return null
+	return message no addr
 
 ---
 

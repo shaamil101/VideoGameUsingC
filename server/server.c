@@ -171,6 +171,7 @@ void playerTable_delete(playerTable_t *playerTable, int yRange)
         free(playerTable);
 }
 
+
 /* Constructor to create a new counter array node */
 game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 {
@@ -274,6 +275,10 @@ int main(int argc, char *argv[])
 
         // // Initialize and load the map
         map_t *curr_map = maps_new(map_pathname);
+        if (curr_map == NULL) {
+          log_v("Got new map to be NULL - stopping game");
+          return 2;
+        }
         free(map_pathname);
         server_dropGold(curr_map, num_nuggets, GoldTotal);
 
@@ -1114,7 +1119,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y),'@');
   maps_setMapNodeType(maps_getMapNode(map, new_x,new_y),player);
 
-  if (maps_ifHallwayNode(maps_getMapNode(map,x,y)))
+  if (maps_isHallwayNode(maps_getMapNode(map,x,y)))
   { //If a hallway is under player
     //Keep it that way
     maps_setMapNodeItem(maps_getMapNode(map, x,y),'#');
@@ -1134,7 +1139,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
 char *game_over_summary()
 {
         // create the string
-        char *message_to_send = (char *)calloc(1000, sizeof(char));
+        char *message_to_send = (char *)mem_calloc_assert(1000, sizeof(char), "Unable to allocate game over summary string memory");
         strcpy(message_to_send, "QUIT ");
 
         strcat(message_to_send, "Thanks for playing!\n");
@@ -1209,7 +1214,7 @@ void make_visible(player_t *player, map_t *map)
       bool** seen = player_getSeenMap(player);
       if (!(seen[y][x]))
       {
-        if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
+        if (maps_isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
         {
           player_addSeenMap(player,x,y,true);
         }
@@ -1226,9 +1231,8 @@ void free_everything(game_t *game)
         }
 
         // free
+
         playerTable_delete(game->players, maps_getYrange(game->map));
-        maps_delete(game->map);
-        free(game);
 }
 
 bool isNumber(char number[])

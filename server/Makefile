@@ -1,4 +1,4 @@
-# Makefile for CS50 Nuggets maps
+# Makefile for CS50 Nuggets
 #   Builds and compiles all the map structs and methods into a library.
 #
 # Wall Street Djournal, CS50 Nuggets 23W

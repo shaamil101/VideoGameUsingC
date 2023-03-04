@@ -15,19 +15,37 @@ LIBFLAGS = $(LIBS) -lm
 CC = gcc
 MAKE = make
 
-.PHONY: all server client clean
+.PHONY: all support maps player server client clean
 
-all: server.o client.o
+all:
+	make support
+	make player
+	make maps
 	make server
 	make client
 
-server: server/server.o
+server:
 	make -C server
 
-client: client/client.o
+client:
 	make -C client
+
+player:
+	make -C player
+
+maps:
+	make -C mapsandvis
+
+support:
+	make -C support support.a
+
 
 # clean up after our compilation
 clean:
+	make -C server clean
+	make -C client clean
+	make -C mapsandvis clean
+	make -C player clean
+	make -C support clean
 	rm -f core
 	rm -f $(LIB) *~ *.o

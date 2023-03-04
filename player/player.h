@@ -14,12 +14,14 @@
 
 
 
+/**struct player_t
+*/
 typedef struct player player_t;
 
 
 /** player_new
 *
-* Returns a pointer to a player
+* Returns a pointer to a player with values instantiated
 *
 * Caller provides:
 *  valid player name, ipaddress, integer for max characters allowed in name
