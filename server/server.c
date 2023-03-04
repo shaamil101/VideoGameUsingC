@@ -754,7 +754,7 @@ char *createGoldMessage(map_t *map, player_t *player)
   int just_collected = player_getJustCollected(player); //Need to check with Jake on this
   int collected = player_getGold(player);
   int left = maps_getTotalGoldLeft( map);
-
+  fprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
   sprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
   return message; //return message
 }
@@ -923,9 +923,9 @@ void move_diag_up_left_MAX(map_t *map, player_t *player)
 
 void move_diag_up_right(map_t *map, player_t *player)
 {
-  if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
   {
-    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) + 1);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player) - 1);
   }
 }
 
