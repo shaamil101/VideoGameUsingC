@@ -40,6 +40,7 @@ void handleGold(const char* message, client_t* client);
 void handleGrid(const char* message);
 void handleDisplay(const char* message);
 void handleError(const char* message);
+void handleInvalidMessage();
 
 /**************** main() ****************/
 /*
@@ -50,8 +51,10 @@ void handleError(const char* message);
  * Output: 1 if successful and 0 if error
 */
 int main(const int argc, char* argv[]) {
+	// start the log module
 	log_init(stderr);
 
+	// parse the arguments
 	client_t* client = parseArgs(argc, argv);
 
 	if (client != NULL) {
@@ -79,33 +82,36 @@ int main(const int argc, char* argv[]) {
  * Output:
 */
 static client_t* parseArgs(const int argc, char* argv[]) {
+	// allocate memory for a client object
 	client_t* client = mem_assert(mem_malloc(sizeof(client_t)), "allocating memory for client");
 	
-	if (argc < 3 && argc > 4) {
+	// if incorrect number of arguments given log and return
+	if (argc < 3 || argc > 4) {
 		log_s("%s: Usage: ./client hostName port [playerName]\n", argv[0]);
 		return NULL;
 	}
-
+	// if port number can't be fetched log and return
 	int clientPort = message_init(NULL);
 	if (clientPort == 0) {
 		log_s("%s: Error: not able to fetch client port number\n", argv[0]);
 		return NULL;
 	}
-
+	// if server address can't be set log and return
 	if (!message_setAddr(argv[1], argv[2], &(client->serverAddress))) { 
 		log_s("%s: Error: failed to set server address\n", argv[0]);
 		return NULL;
 	}
-
+	// if the are only 3 args client is a spectator and client object is updated
 	if (argc == 3) {
 		client->isSpectator = true;
 		client->playerName = NULL;
+	// if there are 4 args given then client is a player and client object is updated
 	} else if (argc == 4) {
 		client->isSpectator = false;
 		client->playerName = argv[3];
 	}
- 
-	return 0;
+	// return client object with correct information
+	return client;
 }
 
 /**************** startClient() ****************/
@@ -163,10 +169,13 @@ void startClient(client_t* client) {
 bool handleInputs(void* arg) {
 	client_t* client = arg;
 
+	// gets the pressed by player and initializes the keyMessage string
 	int keyPressed = getch();
 	char keyMessage[strlen("KEY " + 2)];
 	
+	// build the keyMessage to be sent to the server
 	sprintf(keyMessage, "KEY %c", keyPressed); 
+	// if the client is not a spectator send it to the server
 	if (!client->isSpectator) {
 		message_send(client->serverAddress, keyMessage);
 	}
@@ -189,25 +198,31 @@ bool handleInputs(void* arg) {
  * and false if not
 */
 bool handleMessage(void* arg, const addr_t addr, const char* message) {
+	// cast arg to client
+	client_t* client = arg;
 
+	// if an OK message is recieved
 	if (strncmp(message, "OK ", strlen("OK ")) == 0) {
 		sscanf(message, "OK %c", &(client->playerId)); 
+	// if a QUIT message is recieved call handleQuit and return true
 	} else if (strncmp(message, "QUIT ", strlen("QUIT ")) == 0) {
 		handleQuit(message);
 		return true;
+	// if a GOLD message is recieved call handleGold
 	} else if (strncmp(message, "GOLD ", strlen("GOLD ")) == 0) {
 		handleGold(message, client);
+	// if a GRID message is recieved call handleGrid
 	} else if (strncmp(message, "GRID ", strlen("GRID ")) == 0) { 
 		handleGrid(message);
+	// if DISPLAY message is recieved call handleDisplay
 	} else if (strncmp(message, "DISPLAY", strlen("DISPLAY")) == 0) {
 		handleDisplay(message);
+	// if ERROR message is recieved call handleError
 	} else if (strncmp(message, "ERROR ", strlen("ERROR ")) == 0) {
 		handleError(message);
+	// if an invalid message recieved call handleInvalidMessage
 	} else {
-		mvprintw(0, 0, "ERROR: received an invalid message");
-
-		clrtoeol();
-		refresh();
+		handleInvalidMessage();
 	}
 
 	return false;
@@ -262,10 +277,9 @@ void handleGold(const char* message, client_t* client) {
 			mvprintw(0, maxStatusMessageLength, "GOLD received: %d", n);
 		}
 	}
-
+	// clear and re-draw
 	clrtoeol();
 	refresh();
-
 }
 
 /**************** handleGrid() ****************/
@@ -288,17 +302,18 @@ void handleGrid(const char* message) {
 	getmaxyx(stdscr, screenHeight, screenWidth);
 
 	// prompt the user to resize the screen and continue once they do
-	while(screenWidth < (gridWidth+1) || screenHeight < (gridHight+1)) {
+	while(screenWidth < (gridWidth + 1) || screenHeight < (gridHeight + 1)) {
 		// print resize message as status
-		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridy+1, gridx+1); 
+		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1);
 		
-		char key; = getch();
+		char key = getch();
 
 		if (key == '\n') {
 			getmaxyx(stdscr, screenHeight, screenWidth);
 		}
 	}
 	
+	// move cursor to 0,0 clear the status message and re-draw
 	move(0, 0);
 	clrtoeol();
 	refresh();
@@ -323,19 +338,18 @@ void handleDisplay(const char* message) {
 	char* mapCopy = mem_assert(mem_malloc(strlen(message) - strlen("DISPLAY\n") + 1), "allocating map copy memory");
 	strcpy(mapCopy, map);
 
-	int screenWidth, screenHeight, currX, currY;
-	getbegyx(stdscr, screenHeight, screenWidth);
-	screenHeight++;
-	move(screenHeight,screenWidth);
-	currX = screenWidth;
-	currY = screenHeight;
-
-	char c; 
+	int begX, begY, currX, currY;
+	getbegyx(stdscr, begY, begX);
+	begY++;
+	move(begY,begX);
+	currX = begX;
+	currY = begY;
+ 
 	for (int i = 0; i < strlen(mapCopy); i++) {
-		c = mapCopy[i];
+		char c = mapCopy[i];
 		if (c == '\n') {
 			currY++;
-			currX = screenWidth;
+			currX = begX;
 			move(currY, currX);
 		} else {
 			addch(c);
@@ -343,7 +357,7 @@ void handleDisplay(const char* message) {
 			move(currY, currX);
 		}
 	}
-
+	// move to top left and re-draw
 	move(0,0);
 	refresh();
 
@@ -366,13 +380,35 @@ void handleError(const char* message) {
 	// allocate memory for and create a copy of the message
 	char* copy = mem_assert(mem_malloc(strlen(message) + 1), "allocating error message");
 	strcpy(copy, message);
-
 	// build a status message with the message copy
 	char* status = copy + strlen("ERROR ");
 	// print the status message
 	mvprintw(0, maxStatusMessageLength, "%s", status);
+	// log the error status message
+	log_s("%s", status);
 	// redraw the display
 	refresh();
 	// free the message copy memory
 	mem_free(copy);
+}
+
+/**************** handleInvalidMessage() ****************/
+/*
+ * The handleInvalid function is used by handleMessage to
+ * handle and invalid message recieved from the server. It prints
+ * a status and logs the status to stderr.
+ * 
+ * Input: None
+ *
+ * Output: None
+*/
+void handleInvalidMessage() {
+	// print status
+	mvprintw(0, 0, "ERROR: received an invalid message");
+	// log status
+	log_v("ERROR: received an invalid message")
+
+	// clear status and re-draw
+	clrtoeol();
+	refresh();
 }
