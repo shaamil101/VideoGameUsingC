@@ -23,7 +23,10 @@ typedef struct player{
     char letterAssigned;               
     char* realName;
 } player_t; 
-
+/**player_new
+*
+* see player.h for more details
+*/
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
     if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
