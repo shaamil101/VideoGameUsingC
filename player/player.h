@@ -9,9 +9,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <player.c>
-#include <mem.h>
-#include <../support/message.h>
+#include "mem.h"
+#include "message.h"
 
 
 
@@ -41,7 +40,7 @@ typedef struct player player_t;
  *  NULL pointer if given node is NULL
  *  Null
 */
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 
 void player_delete(player_t* player);
 

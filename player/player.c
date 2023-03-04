@@ -9,9 +9,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <player.h>
-#include <mem.h>
-#include <../support/message.h>
+#include "player.h"
+#include "mem.h"
+#include "message.h"
 
 typedef struct player{
     int x;                        
@@ -24,11 +24,11 @@ typedef struct player{
     char* realName;
 } player_t; 
 
-player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
     if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
-            char* newName;
+            char newName[maxCharacters];
             for (int i = 0; i < maxCharacters; i ++){
                 newName[i] = playerName[i];
             }
@@ -41,8 +41,8 @@ player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters
         playerNew->gold = 0;
         playerNew->justCollected = 0;
         playerNew->seenMap = mem_malloc((totalRows * totalCollumns)*sizeof(bool));
-        playerNew->x = NULL; 
-        playerNew->y = NULL; 
+        playerNew->x = 0; 
+        playerNew->y = 0; 
         return playerNew;
     }
     return NULL;
@@ -83,9 +83,7 @@ int player_getJustCollected(player_t* player){
 
 void player_addSeenMap(player_t* player, int collumn, int row, bool state){
     if (player){//null check
-        bool temp = player->seenMap[collumn][row];
-        temp = state;
-        
+        player->seenMap[collumn][row] = state;
     }
 }
 
@@ -134,7 +132,7 @@ char player_getLetterAssigned(player_t* player){
     if (player){
         return player->letterAssigned;
     }
-    return NULL;
+    return '\0';
 }
 
 addr_t player_getIP(player_t* player){
