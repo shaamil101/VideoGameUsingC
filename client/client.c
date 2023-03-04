@@ -40,6 +40,7 @@ void handleGold(const char* message, client_t* client);
 void handleGrid(const char* message);
 void handleDisplay(const char* message);
 void handleError(const char* message);
+void handleInvalidMessage();
 
 /**************** main() ****************/
 /*
@@ -55,7 +56,7 @@ int main(const int argc, char* argv[]) {
 
 	// parse the arguments
 	client_t* client = parseArgs(argc, argv);
-	
+
 	if (client != NULL) {
 		startClient(client);
 
@@ -217,12 +218,9 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
 	// if ERROR message is recieved call handleError
 	} else if (strncmp(message, "ERROR ", strlen("ERROR ")) == 0) {
 		handleError(message);
-	// if an invalid message recieved
+	// if an invalid message recieved call handleInvalidMessage
 	} else {
-		mvprintw(0, 0, "ERROR: received an invalid message");
-
-		clrtoeol();
-		refresh();
+		handleInvalidMessage();
 	}
 
 	return false;
@@ -338,19 +336,19 @@ void handleDisplay(const char* message) {
 	char* mapCopy = mem_assert(mem_malloc(strlen(message) - strlen("DISPLAY\n") + 1), "allocating map copy memory");
 	strcpy(mapCopy, map);
 
-	int screenWidth, screenHeight, currX, currY;
-	getbegyx(stdscr, screenHeight, screenWidth);
-	screenHeight++;
-	move(screenHeight,screenWidth);
-	currX = screenWidth;
-	currY = screenHeight;
+	int begX, begY, currX, currY;
+	getbegyx(stdscr, begY, begX);
+	begY++;
+	move(begY,begX);
+	currX = begX;
+	currY = begY;
 
 	char c; 
 	for (int i = 0; i < strlen(mapCopy); i++) {
 		c = mapCopy[i];
 		if (c == '\n') {
 			currY++;
-			currX = screenWidth;
+			currX = begX;
 			move(currY, currX);
 		} else {
 			addch(c);
@@ -381,13 +379,35 @@ void handleError(const char* message) {
 	// allocate memory for and create a copy of the message
 	char* copy = mem_assert(mem_malloc(strlen(message) + 1), "allocating error message");
 	strcpy(copy, message);
-
 	// build a status message with the message copy
 	char* status = copy + strlen("ERROR ");
 	// print the status message
 	mvprintw(0, maxStatusMessageLength, "%s", status);
+	// log the error status message
+	log_s("%s", status);
 	// redraw the display
 	refresh();
 	// free the message copy memory
 	mem_free(copy);
+}
+
+/**************** handleInvalidMessage() ****************/
+/*
+ * The handleInvalid function is used by handleMessage to
+ * handle and invalid message recieved from the server. It prints
+ * a status and logs the status to stderr.
+ * 
+ * Input: None
+ *
+ * Output: None
+*/
+void handleInvalidMessage() {
+	// print status
+	mvprintw(0, 0, "ERROR: received an invalid message");
+	// log status
+	log_v("ERROR: received an invalid message");
+
+	// clear and re-draw
+	clrtoeol();
+	refresh();
 }
