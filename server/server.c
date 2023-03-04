@@ -197,10 +197,13 @@ game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 }
 
 game_t *game;
-
-/**
- * 
- * return 2 - null map
+/**************** main ****************/
+/*
+Main performs a series of checks and initializes the necessary components before starting the game. 
+It validates the number of arguments passed to the program, 
+initializes the logging file, and sets up the game environment based on the arguments provided. 
+Finally, it starts the server and waits for clients to connect. Once the game is complete,
+ it cleans up any resources used by the program and exits.
 */
 int main(int argc, char *argv[])
 {
@@ -319,6 +322,7 @@ int main(int argc, char *argv[])
 }
 
 /**************** server_dropGold ****************/
+/* A function called to drop random piles of gold in the map */
 void server_dropGold(map_t *map, int num_piles, int gold_amount)
 {
 
@@ -404,7 +408,12 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
   }
 }
 
-/* WHen there is a message to parse from a client */
+/**************** handleMessage ****************/
+/*
+This function  is a utility function that allows a server to handle 
+incoming messages from clients and take appropriate actions based on the 
+contents of the message.
+*/
 bool handleMessage(void *arg, const addr_t from, const char *message)
 {
 
@@ -696,7 +705,10 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 }
 
 
-/* Send the player a display message  */
+/**************** send_player_display ****************/
+/*
+The function creates a new gold pile with the specified amount of gold.
+*/
 void send_player_display(game_t *game, player_t *player, addr_t from)
 {
         // create the grid string and determine the size
@@ -714,7 +726,11 @@ void send_player_display(game_t *game, player_t *player, addr_t from)
         free(DISPLAYMESSAGE);
 }
 
-/* Send the player a gold message  */
+/**************** send_player_gold ****************/
+/*
+The function is to send a message containing information 
+about the amount of gold left in the game to a player.
+*/
 void send_player_gold(game_t *game, player_t *player, addr_t from)
 {
         char *goldmessage = createGoldMessage(game->map, player);
@@ -722,7 +738,9 @@ void send_player_gold(game_t *game, player_t *player, addr_t from)
         free(goldmessage);
 }
 
-/* Send the spectator a display message  */
+/**************** send_spectator_display ****************/
+/* The function is to send a message containing information 
+about the display left in the game to a spectator. */
 void send_spectator_display(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
@@ -740,7 +758,9 @@ void send_spectator_display(game_t *game, addr_t from)
         free(DISPLAYMESSAGE);
 }
 
-/* Send the spectator a gold message  */
+/**************** send_spectator_gold ****************/
+/* The function is to send a message containing information 
+about the gold amount left in the game to a spectator. */
 void send_spectator_gold(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
@@ -843,6 +863,8 @@ char getCharacterBasedOnIndex(int i)
     return toReturn;
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_left(map_t *map, player_t *player)
 {
   if (player_getXPosition(player) >= 1)
@@ -862,6 +884,8 @@ void move_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_right ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_right(map_t *map, player_t *player)
 {
   if (player_getXPosition(player) < maps_getCols(map))
@@ -881,6 +905,8 @@ void move_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_up ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_up(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
@@ -889,6 +915,8 @@ void move_up(map_t *map, player_t *player)
   }
 }
 
+/**************** move_up_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_up_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
@@ -897,6 +925,8 @@ void move_up_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_down ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_down(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)+1)))
@@ -904,6 +934,9 @@ void move_down(map_t *map, player_t *player)
     player_move(map, player, player_getXPosition(player), player_getYPosition(player) + 1);
   }
 }
+
+/**************** move_down_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 
 void move_down_MAX(map_t *map, player_t *player)
 {
@@ -913,6 +946,8 @@ void move_down_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_up_left(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
@@ -921,6 +956,8 @@ void move_diag_up_left(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_left_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_up_left_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
@@ -929,6 +966,8 @@ void move_diag_up_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_up_right(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
@@ -937,6 +976,8 @@ void move_diag_up_right(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_right_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_up_right_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
@@ -945,6 +986,8 @@ void move_diag_up_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_down_left(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
@@ -953,6 +996,8 @@ void move_diag_down_left(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_down_left_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_down_left_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
@@ -961,6 +1006,8 @@ void move_diag_down_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_down_right(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
@@ -969,6 +1016,8 @@ void move_diag_down_right(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_down_right_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_down_right_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
@@ -977,6 +1026,14 @@ void move_diag_down_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** moveable ****************/
+/*
+his function determines whether a given node on a map is moveable or not.
+It takes a pointer to a map node as input and returns a boolean value indicating
+whether it is safe to move onto the node or not. 
+The function checks if the node is not null and if it contains a valid character ('.', '*', '@', or '#') 
+which denotes empty space, a box, the player, or a target respectively.
+*/
 bool moveable(mapNode_t *node)
 {
   mapNode_t *this_node = node;
@@ -1006,6 +1063,15 @@ void server_dropPlayer(map_t *map, player_t *player)
 
 
 /********************* player_move ********************/
+/*
+This function  is responsible for moving the player within the game map. 
+It takes the current map, player object, and the new x and y coordinates to move the player to.
+The function checks for the type of the item present in the new position and performs different actions based on it.
+If it's a gold pile, it subtracts the gold from the map and adds it to the player's inventory.
+If it's a hallway, it simply switches the character with an empty space. 
+If it's another player, it swaps the positions of the two players.
+Finally, the function updates the game map with the new positions of the players and the items
+*/
 void player_move(map_t *map, player_t *player, int new_x, int new_y)
 {
   int x = player_getXPosition(player);
