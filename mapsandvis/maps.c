@@ -60,6 +60,8 @@ static bool sixthAndSeventhOctant(map_t* map, int playerRow, int playerCol, int 
  */
 map_t* maps_new(char* mapTextAddress)
 {
+  log_init(stderr);
+  log_v("initialize map logging");
   if (mapTextAddress == NULL) { // validate args
     log_v("Text map passed to maps_new is NULL");
     return NULL;
