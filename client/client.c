@@ -128,14 +128,14 @@ void startClient(client_t* client) {
 
 	char* serverMessage;
 
-	// if the user is a spectator
+	// if the user is a spectator send a SPECTATE message to server
 	if (client->isSpectator) {
 		serverMessage = mem_assert(mem_malloc(strlen("SPECTATE") + 1), "allocating server message memory");
 
 		strcpy(serverMessage, "SPECTATE");
 		message_send(client->serverAddress, serverMessage);
 
-	// if the user is a player
+	// if the user is a player send a PLAY message to the server
 	} else {
 		serverMessage = mem_assert(mem_malloc(strlen("PLAY ") + strlen(client->playerName) + 1), "allocating server message memory");
 
@@ -145,8 +145,6 @@ void startClient(client_t* client) {
 
 	// free message memory
 	mem_free(serverMessage);
-	serverMessage = NULL;
-
 	// refresh the display
 	refresh();
 }
@@ -300,7 +298,7 @@ void handleGrid(const char* message) {
 	// prompt the user to resize the screen and continue once they do
 	while(screenWidth < (gridWidth + 1) || screenHeight < (gridHeight + 1)) {
 		// print resize message as status
-		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
+		mvprintw(0, 0, "Your display window is too small. It must be allow for least %d characters wide and %d characters high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
 		
 		char key = getch();
 
