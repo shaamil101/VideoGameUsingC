@@ -106,6 +106,10 @@ int maps_getRows(map_t* map);
 */
 int maps_getCols(map_t* map);
 
+int maps_getXrange(map_t* map);
+
+int maps_getYrange(map_t* map);
+
 /** maps_getMapNode
  * 
  * Returns the mapNode at the row, column index of a given map grid
@@ -164,6 +168,8 @@ void maps_setMapNodeItem(mapNode_t* node, char item);
 */
 void maps_setMapNodeType(mapNode_t* node, void* type);
 
+bool maps_isHallwayNode(mapNode_t* node);
+
 /** maps_isVisible
  * 
  * Returns a boolean value of whether or not a position is visible at another position
@@ -174,7 +180,7 @@ void maps_setMapNodeType(mapNode_t* node, void* type);
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+bool maps_isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
 
 /** maps_setTotalGoldLeft
  * 

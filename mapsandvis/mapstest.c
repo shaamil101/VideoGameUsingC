@@ -12,5 +12,5 @@
 int main()
 {
   map_t* map = maps_new("../maps/main.txt");
-  printf("%s",maps_basegrid(map));
+  printf("%s\n",maps_basegrid(map));
 }

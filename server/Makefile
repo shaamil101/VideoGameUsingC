@@ -1,33 +1,38 @@
-# Makefile for CS50 Nuggets maps
+# Makefile for CS50 Nuggets
 #   Builds and compiles all the map structs and methods into a library.
 #
 # Wall Street Djournal, CS50 Nuggets 23W
 
 # object files, and the target library
 OBJS = server.o
-LIBS = ../player/player.a ../support/support.a ../libcs50/libcs50-given.a ../mapsandvis/maps.a
+LIBS = ../mapsandvis/maps.a ../player/player.a ../support/support.a ../libcs50/libcs50-given.a 
 PLAYERLIB = ../player
 MAPSLIB = ../mapsandvis
 SUPPORTLIB = ../support
 CS50LIB = ../libcs50
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(PLAYERLIB) -I$(MAPSLIB) -I$(SUPPORTLIB) -I$(CS50LIB)
-LIBFLAGS = $(LIBS) -lm
+LIBFLAGS = -lm
 CC = gcc
 MAKE = make
 
 .PHONY: all server clean
 
-all: server
+all:
+	make -C ../player
+	make -C ../mapsandvis
+	make server
 
-server: mapstest.o maps.a
-# $(CC) $(CFLAGS) mapstest.c maps.a ../player/player.a ../support/support.a ../libcs50/libcs50-given.a -I../player -I../support -lm -o mapstest
-	$(CC) $(CFLAGS) $(LIBFLAGS) server.c $(LIBFLAGS) -o server
+server: server.o
+	$(CC) $(CFLAGS) server.o $(LIBS) $(LIBFLAGS) -o server
 
 # Dependencies: object files depend on header files
 server.o: server.h
+	$(CC) $(CFLAGS) server.c $(LIBFLAGS) -c -o server.o
 
 # clean up after our compilation
 clean:
+	rm -f ../player/player.a
+	rm -f ../mapsandvis/maps.a
 	rm -f server
 	rm -f core
 	rm -f *~ *.o

@@ -3,27 +3,76 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
-#include "mem.h"
-#include "player.h"
-#include "mapsandvis.h"
 #include <string.h>
-#include "support/message.h"
-#include "support/log.h"
+#include "message.h"
+#include "log.h"
 #include <ctype.h>
 #include <unistd.h>
 #include "memory.h"
+#include "maps.h"
+#include "player.h"
 
-static const int MaxNameLength = 50;   // max number of chars in playerName
-static const int MaxPlayers = 26;      // maximum number of players
-static const int GoldTotal = 250;      // amount of gold in the game
-static const int GoldMinNumPiles = 10; // minimum number of gold piles
-static const int GoldMaxNumPiles = 30; // maximum number of gold piles
+#define MaxNameLength 50   // max number of chars in playerName
+#define MaxPlayers 26      // maximum number of players
+#define GoldTotal 250      // amount of gold in the game
+#define GoldMinNumPiles 10 // minimum number of gold piles
+#define GoldMaxNumPiles 30 // maximum number of gold piles
+
+/* A data structure which holds the player, their address, and their letter */
+typedef struct playerNode
+{
+        addr_t address;
+        char *playerLetter;
+        player_t *player;
+} playerNode_t;
+
+/* A data structure which holds the player, their address, and their letter */
+playerNode_t *playerNode_new()
+{
+        playerNode_t *playerNode = malloc(sizeof(playerNode_t));
+        return playerNode;
+}
+
+/* A data structure which holds all of the players */
+typedef struct playerTable
+{
+        playerNode_t *arr[MaxPlayers];
+} playerTable_t;
+
+typedef struct spectator
+{
+        addr_t address;
+} spec_t;
+
+typedef struct gold_pile
+{
+  int amount;
+  int x;
+  int y;
+} gold_pile_t;
+
+typedef struct gold
+{
+  gold_pile_t* piles;
+  int num_piles;
+} gold_t;
+/* A global variable game which holds the most important states of the game */
+typedef struct game
+{
+        // Instance variables
+        char *playersChar; // holds the char the tabular summary
+        int numplayers;
+        int num_nuggets;
+        spec_t *spectator;
+        map_t *map;
+        playerTable_t *players; // holds a player with the table
+} game_t;
 
 void server_dropGold(map_t *map, int num_piles, int gold_amount);
 bool handleMessage(void *arg, const addr_t from, const char *message);
 gold_pile_t *new_gold_pile(int size);
 void delete_gold_pile(gold_pile_t *pile);
-void playerTable_delete(playerTable_t *playerTable);
+void playerTable_delete(playerTable_t *playerTable, int yRange);
 spec_t *spectator_new(addr_t address);
 playerTable_t *playerTable_new();
 game_t *gamenode_new(int num_nuggets, map_t *curr_map);
@@ -32,7 +81,7 @@ void send_player_gold(game_t *game, player_t *player, addr_t from);
 void send_spectator_gold(game_t *game, addr_t from);
 char *createGoldMessage(map_t *map, player_t *player);
 player_t *player_set(map_t *map, player_t *player);
-char *getCharacterBasedOnIndex(int i);
+char getCharacterBasedOnIndex(int i);
 void move_left(map_t *map, player_t *player);
 void move_right(map_t *map, player_t *player);
 void move_up(map_t *map, player_t *player);
@@ -49,7 +98,7 @@ void move_up_MAX(map_t *map, player_t *player);
 void move_right_MAX(map_t *map, player_t *player);
 void move_left_MAX(map_t *map, player_t *player);
 void move_down_MAX(map_t *map, player_t *player);
-bool moveable(mapnode_t *node);
+bool moveable(mapNode_t *node);
 void server_dropPlayer(map_t *map, player_t *player);
 void player_move(map_t *map, player_t *player, int new_x, int new_y);
 char *game_over_summary();
@@ -59,48 +108,10 @@ void free_everything(game_t *game);
 void make_visible(player_t *player, map_t *map);
 void send_spectator_display(game_t *game, addr_t from);
 
-/* A data structure which holds the player, their address, and their letter */
-typedef struct playerNode
-{
-        addr_t address;
-        char *playerLetter;
-        player_t *player;
-} playerNode_t;
-
-/* A data structure which holds the player, their address, and their letter */
-playerNode_t *playerNode_new()
-{
-        playerNode_t *playerNode = mem_malloc(sizeof(playerNode_t));
-        return playerNode;
-}
-
-/* A data structure which holds all of the players */
-typedef struct playerTable
-{
-        playerNode_t *arr[MaxPlayers];
-} playerTable_t;
-
-typedef struct spectator
-{
-        addr_t address;
-} spec_t;
-typedef struct gold_pile
-{
-  int amount;
-  int x;
-  int y;
-} gold_pile_t;
-typedef struct gold
-{
-  gold_pile_t* piles;
-  int num_piles;
-} gold_t;
-
-
 /****************new_gold_pile****************/
 gold_pile_t *new_gold_pile(int size)
 {
-  gold_pile_t *pile = mem_malloc(sizeof(gold_pile_t)); //allocate space for pile
+  gold_pile_t *pile = malloc(sizeof(gold_pile_t)); //allocate space for pile
   if (pile == NULL)
   {
     return NULL;
@@ -120,15 +131,16 @@ void delete_gold_pile(gold_pile_t *pile)
 /* Create a new gold */
 gold_t *gold_new(int numberOfPiles)
 {
-        gold_t goldList;
-        goldList.num_piles = numberOfPiles;
-        gold_t *goldList.piles = mem_malloc(goldList.num_piles * sizeof(gold_pile_t));
+        gold_t* goldList = mem_malloc_assert(sizeof(gold_t), "gold_new: unable to allocate memory for gold");
+        (*goldList).num_piles = numberOfPiles;
+        (*goldList).piles = new_gold_pile((*goldList).num_piles);
+        return goldList;
 }
 
 /* Create a new spectator */
 spec_t *spectator_new(addr_t address)
 {
-        spec_t *spectator = mem_malloc(sizeof(spec_t));
+        spec_t *spectator = malloc(sizeof(spec_t));
         spectator->address = address;
         return(spectator);
 }
@@ -136,7 +148,7 @@ spec_t *spectator_new(addr_t address)
 /* Create a new player table */
 playerTable_t *playerTable_new()
 {
-        playerTable_t *playerTable = mem_malloc(sizeof(playerTable_t));
+        playerTable_t *playerTable = malloc(sizeof(playerTable_t));
         for (int i = 0; i < MaxPlayers; i++)
         {
                 playerTable->arr[i] = NULL;
@@ -145,34 +157,25 @@ playerTable_t *playerTable_new()
 }
 
 /* Deletes everything in the player table */
-void playerTable_delete(playerTable_t *playerTable)
+void playerTable_delete(playerTable_t *playerTable, int yRange)
 {
         for (int i = 0; i < MaxPlayers; i++)
         {
                 // loop through everything in the array
                 if (playerTable->arr[i] != NULL)
                 {
-                        player_delete(playerTable->arr[i]->player);
+                        player_delete(playerTable->arr[i]->player, yRange);
+                        free(playerTable->arr[i]);
                 }
         }
         free(playerTable);
 }
-/* A global variable game which holds the most important states of the game */
-typedef struct game
-{
-        // Instance variables
-        char *playersChar; // holds the char the tabular summary
-        int numplayers;
-        int num_nuggets;
-        spec_t *spectator;
-        map_t *map;
-        playerTable_t *players; // holds a player with the table
-} game_t;
+
 
 /* Constructor to create a new counter array node */
 game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 {
-        game_t *game = mem_calloc(1, sizeof(game_t));
+        game_t *game = calloc(1, sizeof(game_t));
 
         // Error check
         if (game == NULL)
@@ -195,6 +198,10 @@ game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 
 game_t *game;
 
+/**
+ * 
+ * return 2 - null map
+*/
 int main(int argc, char *argv[])
 {
         // Validate the number arguments
@@ -207,7 +214,7 @@ int main(int argc, char *argv[])
 
         // Can assume a map file is valid, but need to infer, but must infer *NR* and *NC* by reading the file.
         // A *map file* is a text file with exactly *NC* lines and in which every line has exactly *NR* characters.
-        char *map_pathname = (char *)mem_calloc(100, sizeof(char));
+        char *map_pathname = (char *)calloc(100, sizeof(char));
         strcpy(map_pathname, ((char *)argv[1]));
 
         // Initialize the logging file
@@ -265,6 +272,10 @@ int main(int argc, char *argv[])
 
         // // Initialize and load the map
         map_t *curr_map = maps_new(map_pathname);
+        if (curr_map == NULL) {
+          log_v("Got new map to be NULL - stopping game");
+          return 2;
+        }
         free(map_pathname);
         server_dropGold(curr_map, num_nuggets, GoldTotal);
 
@@ -294,7 +305,7 @@ int main(int argc, char *argv[])
         log_d("Annoucing the port! Ready at port '%d'", port_num);
 
         //Create an internet address; initialize in in a call to message_setAddr
-        addr_t addr = message_noAddr(); //mem_calloc(1, sizeof(addr_t));
+        addr_t addr = message_noAddr(); //calloc(1, sizeof(addr_t));
 
         message_loop(&addr, 0, NULL, NULL, handleMessage);
         log_v("thanks for playing!");
@@ -312,14 +323,16 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
 {
 
   maps_setTotalGoldLeft(map,gold_amount);
-  int numOfRows = maps_getRows(map);
-  int numOfColumns = maps_getCols(map);
+  int xRange = maps_getXrange(map);
+  log_d("server_dropGold: got xRange in map to be %d", xRange);
+  int yRange = maps_getYrange(map);
+  log_d("server_dropGold: got yRange in map to be %d", yRange);
   
   //Counting the amount of open spaces where gold can go
   int open_spaces = 0;
-  for (int i = 0; i < numOfRows; i++)
+  for (int i = 0; i < xRange; i++)
   {
-    for (int j = 0; j < numOfColumns; j++)
+    for (int j = 0; j < yRange; j++)
     {
       if (maps_getMapNode(map, i, j) != NULL)
       {
@@ -365,9 +378,9 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
 
     //Loop through, and add gold to this location
     int space = 0;
-    for (int i = 0; i < numOfRows; i++)
+    for (int i = 0; i < xRange; i++)
     {
-      for (int j = 0; j < numOfColumns; j++)
+      for (int j = 0; j < yRange; j++)
       {
         if (maps_getMapNode(map, i, j) != NULL)
         {
@@ -447,7 +460,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 */
 
                 // Create new player
-                player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getRows, maps_getCols, '@');
+                player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getXrange(game->map), maps_getYrange(game->map), '@');
                 newPlayer = player_set(game->map, newPlayer);
 
                 // Add the player to the game struct array
@@ -464,7 +477,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 // Assign the player to arr[i] and add the player letter 'A'
                 (game->players->arr[i]) = node;
-                char *playerLetter;
+                char playerLetter;
 
                 log_d("The index: %d\n", i);
 
@@ -475,9 +488,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                         // Determine their characters
                         playerLetter = getCharacterBasedOnIndex(i);
-                        log_s("The character letter %s\n", playerLetter);
+                        log_c("The character letter %c\n", playerLetter);
                         //server_dropPlayer_char(newPlayer, *playerLetter);
-                        player_setLetterAssigned(player, playerLetter);
+                        player_setLetterAssigned(game->players->arr[i]->player, playerLetter);
                         //game->players->arr[i]->playerLetter = playerLetter;
                 }
 
@@ -486,7 +499,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 // Respond with OK 'char letter'
                 char letter[100] = "OK ";
-                strcat(letter, playerLetter);
+                letter[3] = playerLetter;
 
                 // Send the message
                 message_send(from, letter);
@@ -497,7 +510,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 int size2 = strlen("GRID") + 16;
 
                 // Sending map message
-                char *map_message = mem_calloc(size2, sizeof(char));
+                char *map_message = calloc(size2, sizeof(char));
                 if (ncols < 30)
                 {
                         sprintf(map_message, "GRID %d %d", nrows, 30);
@@ -539,7 +552,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 int size2 = strlen("GRID") + 15 + 1;
 
                 // Sending map message
-                char *map_message = mem_calloc(size2, sizeof(char));
+                char *map_message = calloc(size2, sizeof(char));
                 sprintf(map_message, "GRID %d %d", nrows, ncols);
                 message_send(from, map_message);
                 free(map_message);
@@ -644,7 +657,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 for (int j = 0; j < game->numplayers; j++)
                 {
                         // send all of the players a tabular summary
-                        addr_t new_address = player_getIP(game->players->arr[j]);
+                        addr_t new_address = player_getIP(game->players->arr[j]->player);
                         char *message_to_send = game_over_summary();
                         message_send(new_address, message_to_send);
                         free(message_to_send);
@@ -667,8 +680,8 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 {
                         // send all of the players a tabular summary
                         player_t *player = game->players->arr[j]->player;
-                        send_player_gold(game, player, player_getIP(game->players->arr[j]));
-                        send_player_display(game, player, player_getIP(game->players->arr[j]));
+                        send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
+                        send_player_display(game, player, player_getIP(game->players->arr[j]->player));
                 }
 
                 if (game->spectator != NULL)
@@ -689,7 +702,7 @@ void send_player_display(game_t *game, player_t *player, addr_t from)
         // create the grid string and determine the size
         char *mapstring = maps_playergrid(game->map, player);
         int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
-        char *DISPLAYMESSAGE = mem_calloc(size, sizeof(char));
+        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
 
         // begin sending the message
         strcpy(DISPLAYMESSAGE, "DISPLAY\n");
@@ -715,7 +728,7 @@ void send_spectator_display(game_t *game, addr_t from)
         // create the grid string and determine the size
         char *mapstring = maps_spectatorgrid(game->map);
         int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
-        char *DISPLAYMESSAGE = mem_calloc(size, sizeof(char));
+        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
 
         // begin sending the message
         strcpy(DISPLAYMESSAGE, "DISPLAY\n");
@@ -732,7 +745,7 @@ void send_spectator_gold(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
         int len = strlen("GOLD ") + 15 + 1;
-        char *goldmessage_spectator = mem_calloc(len, sizeof(char));
+        char *goldmessage_spectator = calloc(len, sizeof(char));
 
         // determine gold comp
         int n = 0;
@@ -747,26 +760,29 @@ void send_spectator_gold(game_t *game, addr_t from)
 /**************** createGoldMessage ****************/
 char *createGoldMessage(map_t *map, player_t *player)
 {
-  char *message = mem_malloc(20 * sizeof(char)); //allocate at least 20 chars of space
-  int just_collected = player->just_collected; //Need to check with Jake on this
+  char *message = malloc(20 * sizeof(char)); //allocate at least 20 chars of space
+  int just_collected = player_getJustCollected(player); //Need to check with Jake on this
   int collected = player_getGold(player);
   int left = maps_getTotalGoldLeft( map);
-
   sprintf(message, "GOLD %d %d %d\n", just_collected, collected, left); //add info to message
   return message; //return message
 }
 
 player_t *player_set(map_t *map, player_t *player)
 {
+  if (map == NULL) {
+    log_v("player_set: got map to be NULL");
+    return NULL;
+  }
   //Loop through grid to determine amount of open spaces
   int open_spaces = 0;
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols; j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
-      if (grid->arr[i][j] != NULL)
+      if (maps_getMapNode(map, i, j) != NULL)
       {
-        if (grid->arr[i][j]->item == '.')
+        if (maps_getMapNodeItem(maps_getMapNode(map, i, j)) == '.')
         {
           open_spaces++;
         }
@@ -780,13 +796,13 @@ player_t *player_set(map_t *map, player_t *player)
 
   //Loop through open spaces and place player there
   int space = 0;
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols; j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
       if (maps_getMapNode(map, i, j) != NULL)
       {
-        if ( maps_getMapNodeItem(maps_getMapNode(map, i,j)=='.'))
+        if ( maps_getMapNodeItem(maps_getMapNode(map, i,j)) == '.')
         {
           if (space == player_location)
           {
@@ -800,11 +816,11 @@ player_t *player_set(map_t *map, player_t *player)
   }
 
   //set whole grid to not visible
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols; j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
-      player_addSeenMap(player, i, j,false);
+      player_addSeenMap(player, i, j, false);
     }
   }
   return player;
@@ -812,18 +828,17 @@ player_t *player_set(map_t *map, player_t *player)
 
 
 /* Returns the alphabetical letter based on index */
-char *getCharacterBasedOnIndex(int i)
+char getCharacterBasedOnIndex(int i)
 {
-    char *toReturn;
+    char toReturn;
     if (i < 0 || i > 25)
     {
         fprintf(stderr, "Please enter a valid index number.\n");
-        toReturn = NULL;
+        toReturn = '\0';
     }
     else
     {
-        toReturn = (char *)mem_malloc(sizeof(char));
-        *toReturn = (char)(i + 65);
+      toReturn = (i + 65);
     }
     return toReturn;
 }
@@ -849,7 +864,7 @@ void move_left_MAX(map_t *map, player_t *player)
 
 void move_right(map_t *map, player_t *player)
 {
-  if (player_getXPosition(player) < maps_getCols)
+  if (player_getXPosition(player) < maps_getCols(map))
   {
     if (moveable(maps_getMapNode(map,player_getXPosition(player)+1,player_getYPosition(player))))
     {
@@ -860,7 +875,7 @@ void move_right(map_t *map, player_t *player)
 
 void move_right_MAX(map_t *map, player_t *player)
 {
-  while ((moveable(maps_getMapNode(map,player_getXPosition(player)+1,player_getYPosition(player)))) && (player_getXPosition(player) < maps_getCols))
+  while ((moveable(maps_getMapNode(map,player_getXPosition(player)+1,player_getYPosition(player)))) && (player_getXPosition(player) < maps_getCols(map)))
   {
     player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player));
   }
@@ -868,7 +883,7 @@ void move_right_MAX(map_t *map, player_t *player)
 
 void move_up(map_t *map, player_t *player)
 {
-  if (moveable(maps_getMapNode(map,player_getXPosition(player)player_getYPosition(player)-1)))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
   {
     player_move(map, player, player_getXPosition(player), player_getYPosition(player) - 1);
   }
@@ -916,9 +931,9 @@ void move_diag_up_left_MAX(map_t *map, player_t *player)
 
 void move_diag_up_right(map_t *map, player_t *player)
 {
-  if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
+  if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
   {
-    player_move(map, player, player_getXPosition(player) - 1, player_getYPosition(player) + 1);
+    player_move(map, player, player_getXPosition(player) + 1, player_getYPosition(player) - 1);
   }
 }
 
@@ -962,13 +977,13 @@ void move_diag_down_right_MAX(map_t *map, player_t *player)
   }
 }
 
-bool moveable(mapnode_t *node)
+bool moveable(mapNode_t *node)
 {
-  mapnode_t *this_node = node;
+  mapNode_t *this_node = node;
   char c;
   if (this_node != NULL)
   {
-    c = this_node->item;
+    c = maps_getMapNodeItem(this_node);
   }
   else
   {
@@ -984,8 +999,8 @@ bool moveable(mapnode_t *node)
 /********************* server_dropPlayer ********************/
 void server_dropPlayer(map_t *map, player_t *player)
 {
-  maps_setMapNodeItem(maps_getMapNode(map_t* map, player_getXPosition(player),player_getYPosition(player)), '@');
-  maps_setMapNodeType(maps_getMapNode(map_t* map, player_getXPosition(player),player_getYPosition(player)), player);
+  maps_setMapNodeItem(maps_getMapNode(map, player_getXPosition(player),player_getYPosition(player)), '@');
+  maps_setMapNodeType(maps_getMapNode(map, player_getXPosition(player),player_getYPosition(player)), player);
   make_visible(player, map);
 }
 
@@ -1003,12 +1018,12 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   { //If a pile of gold
     gold_pile_t *pile = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y));
     
-    aps_setTotalGoldLeft(map,pile->amount); //subtract amoun of gold from goldleft
-    player->justCollected = pile->amount;
+    maps_setTotalGoldLeft(map,maps_getTotalGoldLeft(map)-pile->amount); //subtract amoun of gold from goldleft
+    player_setJustCollected(player, pile->amount);
     player_addGold(player,pile->amount);
     char_to_switch = '.';  //Player is switching with empty space
     item_to_switch = NULL; //Player is switching with null type
-    //delete_gold_pile(pile);
+    delete_gold_pile(pile);
   }
   else if (maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y))  == '#')
   { //if going down a hallway
@@ -1035,20 +1050,20 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   player_setYPosition(player, new_y);
 
   //set things at new spot to the '@' character and player
-  maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y,'@'));
-  maps_setMapNodeType(maps_getMapNode(map, new_x,new_y,player));
+  maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y),'@');
+  maps_setMapNodeType(maps_getMapNode(map, new_x,new_y),player);
 
-  if (maps_getMapNodeItem(maps_getMapNode(map,x,y))=='#')
+  if (maps_isHallwayNode(maps_getMapNode(map,x,y)))
   { //If a hallway is under player
     //Keep it that way
-    maps_setMapNodeItem(maps_getMapNode(map, x,y,'#'));
-    maps_setMapNodeType(maps_getMapNode(map, x,y,NULL));
+    maps_setMapNodeItem(maps_getMapNode(map, x,y),'#');
+    maps_setMapNodeType(maps_getMapNode(map, x,y),NULL);
   }
   else
   { //If not
     //Put the new charcter and item where player is
-    maps_setMapNodeItem(maps_getMapNode(map, x,y,char_to_switch));
-    maps_setMapNodeType(maps_getMapNode(map, x,y,item_to_switch));
+    maps_setMapNodeItem(maps_getMapNode(map, x,y),char_to_switch);
+    maps_setMapNodeType(maps_getMapNode(map, x,y),item_to_switch);
   }
 
   make_visible(player, map);
@@ -1058,7 +1073,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
 char *game_over_summary()
 {
         // create the string
-        char *message_to_send = (char *)mem_calloc(1000, sizeof(char));
+        char *message_to_send = (char *)mem_calloc_assert(1000, sizeof(char), "Unable to allocate game over summary string memory");
         strcpy(message_to_send, "QUIT ");
 
         strcat(message_to_send, "Thanks for playing!\n");
@@ -1074,19 +1089,19 @@ char *game_over_summary()
         while (temp_num_players > 0)
         {
                 // get the information needed to print
-                char *player_letter = player_getLetterAssigned(game->players->arr[temp_num_players - 1]);
-                log_v(player_letter);
+                char player_letter = player_getLetterAssigned(game->players->arr[temp_num_players - 1]->player);
+                log_c("Got player letter to be: %c",player_letter);
 
-                int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]));
-                char *player_purse_char = (char *)mem_calloc(10, sizeof(char));
+                int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]->player));
+                char *player_purse_char = (char *)calloc(10, sizeof(char));
                 sprintf(player_purse_char, "%d", player_purse);
 
-                char *real_name = (char *)mem_calloc(25, sizeof(char));
-                strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]));
+                char *real_name = (char *)calloc(25, sizeof(char));
+                strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]->player));
 
                 // Add the portions of the table
                 strcat(message_to_send, "      ");
-                strcat(message_to_send, player_letter);
+                strcat(message_to_send, &player_letter);
 
                 strcat(message_to_send, "      \t");
                 strcat(message_to_send, player_purse_char);
@@ -1112,7 +1127,7 @@ player_t *searchByAddress(addr_t from)
         int j = 0;
 
         // iterate through everyone
-        while ((message_eqAddr(player_getIP(game->players->arr[j]), from) != true) && (j < game->numplayers))
+        while ((message_eqAddr(player_getIP(game->players->arr[j]->player), from) != true) && (j < game->numplayers))
         {
                 j++;
         }
@@ -1126,19 +1141,18 @@ player_t *searchByAddress(addr_t from)
 void make_visible(player_t *player, map_t *map)
 {
   //loop through all nodes in grid
-  for (int x = 0; x < maps_getRows(map); x++)
+  for (int x = 0; x < maps_getXrange(map); x++)
   {
-    for (int y = 0; y < maps_getCols(map); y++)
+    for (int y = 0; y < maps_getYrange(map); y++)
     {
       bool** seen = player_getSeenMap(player);
-      if (!(seen[x][y]))
+      if (!(seen[y][x]))
       {
-        if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
+        if (maps_isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
         {
           player_addSeenMap(player,x,y,true);
         }
       }
-      free(seen);
     }
   }
 }
@@ -1151,9 +1165,8 @@ void free_everything(game_t *game)
         }
 
         // free
-        playerTable_delete(game->players);
-        maps_delete(game->map);
-        free(game);
+
+        playerTable_delete(game->players, maps_getYrange(game->map));
 }
 
 bool isNumber(char number[])
