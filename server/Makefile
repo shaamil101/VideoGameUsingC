@@ -11,7 +11,7 @@ MAPSLIB = ../mapsandvis
 SUPPORTLIB = ../support
 CS50LIB = ../libcs50
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(PLAYERLIB) -I$(MAPSLIB) -I$(SUPPORTLIB) -I$(CS50LIB)
-LIBFLAGS = $(LIBS) -lm
+LIBFLAGS = -lm
 CC = gcc
 MAKE = make
 
@@ -23,7 +23,7 @@ all:
 	make server
 
 server: server.o
-	$(CC) $(CFLAGS) server.o $(LIBFLAGS) -o server
+	$(CC) $(CFLAGS) server.o $(LIBS) $(LIBFLAGS) -o server
 
 # Dependencies: object files depend on header files
 server.o: server.h

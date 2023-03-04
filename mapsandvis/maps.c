@@ -28,6 +28,7 @@ typedef struct mapNode{
   char item;
   void* type;
   bool isTransparent;
+  bool isHallway;
 } mapNode_t;
 
 typedef struct map{
@@ -275,10 +276,14 @@ char* maps_playergrid(map_t* map, player_t* player)
             } else if (node->item == '*') { // if it's gold
               *(charptr++) = node->item;
             } else { // otherwise print normal
-              *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
+              *(charptr++) = maps_getMapNodeItem(node); // 	add char at that index of the map_t->grid 2d array to the string
             }
           } else { // not currently visible to player
-            *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
+            if (node->item == '@' || node->item == '*') {// if it is a player or gold
+              *(charptr++) = '.'; // make it an empty room slot instead
+            } else { // not player or gold and not visible (but already seen by player), add normally
+              *(charptr++) = maps_getMapNodeItem(node); // 	add char at that index of the map_t->grid 2d array to the string
+            }
           }
         } else {
           log_v("maps_playergrid: got NULL mapNode in the map");
@@ -368,7 +373,48 @@ bool isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
       }
     }
     return true; // return true if we make it to the end
-  } else if (changeInRows < 0) {
+  } else if (changeInRows == changeInCols) {// diagonals
+    if (changeInRows > 0) {
+      int col = playerCol+1;
+      int row = playerRow+1;
+      while (col < testCol) {
+        if (!map->grid[row++][col++]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+    return true; // return true if we make it to the end
+    } else {// changeInRows < 0
+      int col = playerCol-1;
+      int row = playerRow-1;
+      while (col > testCol) {
+        if (!map->grid[row--][col--]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+    return true; // return true if we make it to the end
+    }
+  } else if (changeInRows == -1*changeInCols) { // other diagonals
+    if (changeInRows > 0) {
+      int col = playerCol-1;
+      int row = playerRow+1;
+      while (col > testCol) {
+        if (!map->grid[row++][col--]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+    return true; // return true if we make it to the end
+    } else {// changeInRows < 0
+      int col = playerCol+1;
+      int row = playerRow-1;
+      while (col < testCol) {
+        if (!map->grid[row--][col++]->isTransparent) { // if point isn't transparent
+          return false;
+        }
+      }
+      return true; // return true if we make it to the end
+    }
+  }
+  else if (changeInRows < 0) {
     if (changeInCols < 0) { // second quadrant
       if (changeInRows < changeInCols) { // third octant
         return secondAndThirdOctant(map, playerRow, playerCol, testRow, testCol);
@@ -619,7 +665,15 @@ mapNode_t* mapNodeNew(char item)
   mapNode_t* node = mem_malloc_assert(sizeof(mapNode_t), "Unable to allocate memory for mapnode struct\n");
   node->item = item;
   node->isTransparent = (item == '.');
+  node->isHallway = (item == '#');
   return node;
+}
+
+bool maps_ifHallwayNode(mapNode_t* node) {
+  if (node == NULL) {
+    return false;
+  }
+  return node->isHallway;
 }
 
 void mapNodeDelete(mapNode_t* node)
@@ -645,7 +699,7 @@ static bool firstAndEighthOctant(map_t* map, int playerRow, int playerCol, int t
   for (int col = playerCol+1; col < testCol; col++) { // for each gridpoint along the col ( player position + 1 incremented by 1)
     intersect = (double)playerRow + (((double)col-(double)playerCol)*slope); // get the intersection on the row (doubel value)
     if (intersect == trunc(intersect)) { // intersects an integer gridpoint
-      if (!map->grid[(int)intersect][playerCol]->isTransparent){ // if point isn't transparent
+      if (!map->grid[(int)trunc(intersect)][col]->isTransparent){ // if point isn't transparent
         return false;
       }
     } else {
@@ -672,7 +726,7 @@ static bool secondAndThirdOctant(map_t* map, int playerRow, int playerCol, int t
   for (int row = playerRow-1; row > testRow; row--) { // for each gridpoint along the col ( player position + 1 incremented by 1)
     intersect = (double)playerCol + (((double)row-(double)playerRow)*slope); // get the intersection on the row (doubel value)
     if (intersect == trunc(intersect)) { // intersects an integer gridpoint
-      if (!map->grid[row][(int)intersect]->isTransparent){ // if point isn't transparent
+      if (!map->grid[row][(int)trunc(intersect)]->isTransparent){ // if point isn't transparent
         return false;
       }
     } else {
@@ -699,7 +753,7 @@ static bool fourthAndFifthOctant(map_t* map, int playerRow, int playerCol, int t
   for (int col = playerCol-1; col > testCol; col--) { // for each gridpoint along the col ( player position + 1 incremented by 1)
     intersect = (double)playerRow + (((double)col-(double)playerCol)*slope); // get the intersection on the row (doubel value)
     if (intersect == trunc(intersect)) { // intersects an integer gridpoint
-      if (!map->grid[(int)intersect][playerCol]->isTransparent){ // if point isn't transparent
+      if (!map->grid[(int)trunc(intersect)][col]->isTransparent){ // if point isn't transparent
         return false;
       }
     } else {
@@ -726,7 +780,7 @@ static bool sixthAndSeventhOctant(map_t* map, int playerRow, int playerCol, int 
   for (int row = playerRow+1; row < testRow; row++) { // for each gridpoint along the col ( player position + 1 incremented by 1)
     intersect = (double)playerCol + (((double)row-(double)playerRow)*slope); // get the intersection on the row (doubel value)
     if (intersect == trunc(intersect)) { // intersects an integer gridpoint
-      if (!map->grid[row][(int)intersect]->isTransparent){ // if point isn't transparent
+      if (!map->grid[row][(int)trunc(intersect)]->isTransparent){ // if point isn't transparent
         return false;
       }
     } else {

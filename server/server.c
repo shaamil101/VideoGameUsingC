@@ -1045,7 +1045,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y),'@');
   maps_setMapNodeType(maps_getMapNode(map, new_x,new_y),player);
 
-  if (maps_getMapNodeItem(maps_getMapNode(map,x,y))=='#')
+  if (maps_ifHallwayNode(maps_getMapNode(map,x,y)))
   { //If a hallway is under player
     //Keep it that way
     maps_setMapNodeItem(maps_getMapNode(map, x,y),'#');

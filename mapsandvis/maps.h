@@ -170,6 +170,8 @@ void maps_setMapNodeItem(mapNode_t* node, char item);
 */
 void maps_setMapNodeType(mapNode_t* node, void* type);
 
+bool maps_ifHallwayNode(mapNode_t* node);
+
 /** maps_isVisible
  * 
  * Returns a boolean value of whether or not a position is visible at another position
