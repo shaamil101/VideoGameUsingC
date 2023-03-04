@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "player.h"
 #include "mem.h"
 #include "message.h"
@@ -141,6 +142,14 @@ char player_getLetterAssigned(player_t* player){
         return player->letterAssigned;
     }
     return '\0';
+}
+
+void player_setLetterAssigned(player_t* player, char letter)
+{
+    if (player != NULL && isupper(letter)){
+        player->letterAssigned = letter;
+    }
+    return;
 }
 
 addr_t player_getIP(player_t* player){

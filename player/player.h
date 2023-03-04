@@ -68,4 +68,6 @@ char* player_getRealName(player_t* player);
 
 char player_getLetterAssigned(player_t* player);
 
+void player_setLetterAssigned(player_t* player, char letter);
+
 addr_t player_getIP(player_t* player);

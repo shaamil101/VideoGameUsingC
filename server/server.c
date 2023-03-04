@@ -12,11 +12,61 @@
 #include "maps.h"
 #include "player.h"
 
-static const int MaxNameLength = 50;   // max number of chars in playerName
-static const int MaxPlayers = 26;      // maximum number of players
-static const int GoldTotal = 250;      // amount of gold in the game
-static const int GoldMinNumPiles = 10; // minimum number of gold piles
-static const int GoldMaxNumPiles = 30; // maximum number of gold piles
+#define MaxNameLength 50   // max number of chars in playerName
+#define MaxPlayers 26      // maximum number of players
+#define GoldTotal 250      // amount of gold in the game
+#define GoldMinNumPiles 10 // minimum number of gold piles
+#define GoldMaxNumPiles 30 // maximum number of gold piles
+
+/* A data structure which holds the player, their address, and their letter */
+typedef struct playerNode
+{
+        addr_t address;
+        char *playerLetter;
+        player_t *player;
+} playerNode_t;
+
+/* A data structure which holds the player, their address, and their letter */
+playerNode_t *playerNode_new()
+{
+        playerNode_t *playerNode = malloc(sizeof(playerNode_t));
+        return playerNode;
+}
+
+/* A data structure which holds all of the players */
+typedef struct playerTable
+{
+        playerNode_t *arr[MaxPlayers];
+} playerTable_t;
+
+typedef struct spectator
+{
+        addr_t address;
+} spec_t;
+
+typedef struct gold_pile
+{
+  int amount;
+  int x;
+  int y;
+} gold_pile_t;
+
+typedef struct gold
+{
+  gold_pile_t* piles;
+  int num_piles;
+} gold_t;
+/* A global variable game which holds the most important states of the game */
+typedef struct game
+{
+        // Instance variables
+        char *playersChar; // holds the char the tabular summary
+        int numplayers;
+        int num_nuggets;
+        spec_t *spectator;
+        map_t *map;
+        playerTable_t *players; // holds a player with the table
+} game_t;
 
 void server_dropGold(map_t *map, int num_piles, int gold_amount);
 bool handleMessage(void *arg, const addr_t from, const char *message);
@@ -58,44 +108,6 @@ void free_everything(game_t *game);
 void make_visible(player_t *player, map_t *map);
 void send_spectator_display(game_t *game, addr_t from);
 
-/* A data structure which holds the player, their address, and their letter */
-typedef struct playerNode
-{
-        addr_t address;
-        char *playerLetter;
-        player_t *player;
-} playerNode_t;
-
-/* A data structure which holds the player, their address, and their letter */
-playerNode_t *playerNode_new()
-{
-        playerNode_t *playerNode = malloc(sizeof(playerNode_t));
-        return playerNode;
-}
-
-/* A data structure which holds all of the players */
-typedef struct playerTable
-{
-        playerNode_t *arr[MaxPlayers];
-} playerTable_t;
-
-typedef struct spectator
-{
-        addr_t address;
-} spec_t;
-typedef struct gold_pile
-{
-  int amount;
-  int x;
-  int y;
-} gold_pile_t;
-typedef struct gold
-{
-  gold_pile_t* piles;
-  int num_piles;
-} gold_t;
-
-
 /****************new_gold_pile****************/
 gold_pile_t *new_gold_pile(int size)
 {
@@ -121,7 +133,7 @@ gold_t *gold_new(int numberOfPiles)
 {
         gold_t goldList;
         goldList.num_piles = numberOfPiles;
-        gold_t *goldList.piles = malloc(goldList.num_piles * sizeof(gold_pile_t));
+        goldList.piles = new_gold_pile(goldList.num_piles);
 }
 
 /* Create a new spectator */
@@ -156,17 +168,6 @@ void playerTable_delete(playerTable_t *playerTable)
         }
         free(playerTable);
 }
-/* A global variable game which holds the most important states of the game */
-typedef struct game
-{
-        // Instance variables
-        char *playersChar; // holds the char the tabular summary
-        int numplayers;
-        int num_nuggets;
-        spec_t *spectator;
-        map_t *map;
-        playerTable_t *players; // holds a player with the table
-} game_t;
 
 /* Constructor to create a new counter array node */
 game_t *gamenode_new(int num_nuggets, map_t *curr_map)
@@ -1002,7 +1003,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   { //If a pile of gold
     gold_pile_t *pile = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y));
     
-    aps_setTotalGoldLeft(map,pile->amount); //subtract amoun of gold from goldleft
+    maps_setTotalGoldLeft(map,pile->amount); //subtract amoun of gold from goldleft
     player_setJustCollected(player, pile->amount);
     player_addGold(player,pile->amount);
     char_to_switch = '.';  //Player is switching with empty space
