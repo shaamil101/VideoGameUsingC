@@ -197,6 +197,10 @@ game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 
 game_t *game;
 
+/**
+ * 
+ * return 2 - null map
+*/
 int main(int argc, char *argv[])
 {
         // Validate the number arguments
@@ -267,6 +271,10 @@ int main(int argc, char *argv[])
 
         // // Initialize and load the map
         map_t *curr_map = maps_new(map_pathname);
+        if (curr_map == NULL) {
+          log_v("Got new map to be NULL - stopping game");
+          return 2;
+        }
         free(map_pathname);
         server_dropGold(curr_map, num_nuggets, GoldTotal);
 
@@ -1064,7 +1072,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
 char *game_over_summary()
 {
         // create the string
-        char *message_to_send = (char *)calloc(1000, sizeof(char));
+        char *message_to_send = (char *)mem_calloc_assert(1000, sizeof(char), "Unable to allocate game over summary string memory");
         strcpy(message_to_send, "QUIT ");
 
         strcat(message_to_send, "Thanks for playing!\n");
