@@ -28,6 +28,7 @@ typedef struct player player_t;
  *  NULL pointer if given node is NULL
  *  Null
 */
+
 /** player_new
  * 
  * Returns a pointer to a player
@@ -51,16 +52,13 @@ int player_getGold(player_t* player);
 int player_getJustCollected(player_t* player);
 
 void player_addSeenMap(player_t* player, int collumn, int row, bool state);
-void player_addSeenMap(player_t* player, int collumn, int row, bool state);
 
 bool** player_getSeenMap(player_t* player);
 
 void player_setXPosition(player_t* player, int xPos);
-void player_setXPosition(player_t* player, int xPos);
 
 int player_getXPosition(player_t* player);
 
-void player_setYPosition(player_t* player, int yPos);
 void player_setYPosition(player_t* player, int yPos);
 
 int player_getYPosition(player_t* player);
