@@ -50,6 +50,8 @@ int player_getGold(player_t* player);
 
 int player_getJustCollected(player_t* player);
 
+void player_setJustCollected(player_t* player, int justCollected);
+
 void player_addSeenMap(player_t* player, int collumn, int row, bool state);
 
 bool** player_getSeenMap(player_t* player);

@@ -81,6 +81,14 @@ int player_getJustCollected(player_t* player){
     return -1;
 }
 
+void player_setJustCollected(player_t* player, int justCollected)
+{
+    if (player != NULL && justCollected >= 0) {
+        player->justCollected = justCollected;
+    }
+    return;
+}
+
 void player_addSeenMap(player_t* player, int collumn, int row, bool state){
     if (player){//null check
         player->seenMap[collumn][row] = state;
