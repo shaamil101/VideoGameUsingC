@@ -170,7 +170,7 @@ void maps_setMapNodeItem(mapNode_t* node, char item);
 */
 void maps_setMapNodeType(mapNode_t* node, void* type);
 
-bool maps_ifHallwayNode(mapNode_t* node);
+bool maps_isHallwayNode(mapNode_t* node);
 
 /** maps_isVisible
  * 
@@ -182,7 +182,7 @@ bool maps_ifHallwayNode(mapNode_t* node);
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
+bool maps_isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol);
 
 /** maps_setTotalGoldLeft
  * 

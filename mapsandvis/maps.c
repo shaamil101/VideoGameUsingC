@@ -177,7 +177,7 @@ char* maps_visiblebasegrid(map_t* map, int row, int col)
     for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
       if (row == r && col == c) {
         *(charptr++) = '@';
-      } else if (isVisible(map, col, row, c, r)) {
+      } else if (maps_isVisible(map, col, row, c, r)) {
         *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
       } else {
         *(charptr++) = ' '; 
@@ -267,7 +267,7 @@ char* maps_playergrid(map_t* map, player_t* player)
       if (seenMap[r][c]) { // if the player has seen the point before
         mapNode_t* node = (maps_getMapNode(map, c, r));
         if (node != NULL) { // NULL check for node
-          if (isVisible(map, player_getXPosition(player), player_getYPosition(player), c, r)) { // if currently visible to player
+          if (maps_isVisible(map, player_getXPosition(player), player_getYPosition(player), c, r)) { // if currently visible to player
             if (node->item == '@') { // if is a player
               player_t* playerAtPoint = (player_t*)(map->grid[r][c]->type);
               if (player_getLetterAssigned(playerAtPoint) == player_getLetterAssigned(player)) {
@@ -282,7 +282,7 @@ char* maps_playergrid(map_t* map, player_t* player)
             }
           } else { // not currently visible to player
             if (node->item == '@' || node->item == '*') {// if it is a player or gold
-              if (maps_ifHallwayNode(node)) { // if the player is in a hallway
+              if (maps_isHallwayNode(node)) { // if the player is in a hallway
                 *(charptr++) = '#'; // rest to hallway
               } else {
                 *(charptr++) = '.'; // make it an empty room slot instead
@@ -317,10 +317,10 @@ char* maps_playergrid(map_t* map, player_t* player)
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
+bool maps_isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
 {
   if (map == NULL) { // validate args
-    log_v("isVisible: received NULL map pointer");
+    log_v("maps_isVisible: received NULL map pointer");
     return false;
   }
   int playerRow = playerY;
@@ -330,16 +330,16 @@ bool isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
   int numRows = map->numRows;
   int numCols = map->numCols;
   if (playerRow < 0 || playerRow >= numRows) { // 	make sure both points row and column values are equal to or less than the map row and column (and non-negative)
-    log_d("isVisible: playerRow %d is out of bounds", playerRow);
+    log_d("maps_isVisible: playerRow %d is out of bounds", playerRow);
     return false;
   } else if (playerCol < 0 || playerCol >= numCols) {
-    log_d("isVisible: playerCol %d is out of bounds", playerCol);
+    log_d("maps_isVisible: playerCol %d is out of bounds", playerCol);
     return false;
   } else if (testRow < 0 || testRow >= numRows) {
-    log_d("isVisible: testRow %d is out of bounds", testRow);
+    log_d("maps_isVisible: testRow %d is out of bounds", testRow);
     return false;
   } else if (testCol < 0 || testCol >= numCols) {
-    log_d("isVisible: testCol %d is out of bounds", testCol);
+    log_d("maps_isVisible: testCol %d is out of bounds", testCol);
     return false;
   }
 
@@ -675,7 +675,7 @@ mapNode_t* mapNodeNew(char item)
   return node;
 }
 
-bool maps_ifHallwayNode(mapNode_t* node) {
+bool maps_isHallwayNode(mapNode_t* node) {
   if (node == NULL) {
     return false;
   }

@@ -1052,7 +1052,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
   maps_setMapNodeItem(maps_getMapNode(map, new_x,new_y),'@');
   maps_setMapNodeType(maps_getMapNode(map, new_x,new_y),player);
 
-  if (maps_ifHallwayNode(maps_getMapNode(map,x,y)))
+  if (maps_isHallwayNode(maps_getMapNode(map,x,y)))
   { //If a hallway is under player
     //Keep it that way
     maps_setMapNodeItem(maps_getMapNode(map, x,y),'#');
@@ -1147,7 +1147,7 @@ void make_visible(player_t *player, map_t *map)
       bool** seen = player_getSeenMap(player);
       if (!(seen[y][x]))
       {
-        if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
+        if (maps_isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
         {
           player_addSeenMap(player,x,y,true);
         }
