@@ -43,7 +43,7 @@ The *client* acts in one of two modes:
 ### Functional decomposition into modules
 
 1. *main*, recieves input when client is called from the command line, calls *parseArgs*, calls *startClient*, calls *message_loop*, calls *message_done*, and initializes a client data structure.
-2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not.
+2. *parseArgs* parses the input given to main from the command line checking for at least 3 arguments, validating them, and marking whether the player is a spectator or not in the client object it returns if successful.
 3. *startClient* sets nCurses up and initializes the network
 4. *handleInputs* function used by message_loop for handling key inputs
 5. *handleMessage* function used by message_loop for handling the messages
@@ -52,6 +52,7 @@ The *client* acts in one of two modes:
 8. *handleGrid* handles the grid message
 9. *handleDisplay* handles the display message
 10. *handleError* handles the error message
+11. *handleInvalidMessage* handles an invalid message recieved from server
  
 ### Pseudo code for logic/algorithmic flow
 
@@ -67,12 +68,13 @@ The *client* acts in one of two modes:
 
 **parseArgs:**
     
+	initalize a client struct
     check if number of arguments is greater than or less than 3
 	check if the port number is retrievable
 	check setting the server address
-	else return a 1 if there is a player name and 0 if not
+	set client properties
+	return the client
     
-
 **handleInputs:**
     
     gets key inputs and sends message to server
