@@ -154,6 +154,8 @@ void startClient(client_t* client) {
 
 	// refresh the display
 	refresh();
+
+	log_v("Client started");
 }
 
 /**************** handleInputs() ****************/
@@ -238,16 +240,15 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
  * Output: none
 */
 void handleQuit(const char* message) {
+	nocbreak();
+	endwin();
 	// build status message
 	char* copy = mem_assert(mem_malloc(strlen(message)+1), "allocating for handle quit message copy");
 	strcpy(copy, message);
 	char* status = copy + strlen("QUIT ");
-
 	// log status message to stderr
 	log_s("%s\n", status);
 
-	nocbreak();
-	endwin();
 	mem_free(copy);
 }
 
@@ -406,7 +407,7 @@ void handleInvalidMessage() {
 	// print status
 	mvprintw(0, 0, "ERROR: received an invalid message");
 	// log status
-	log_v("ERROR: received an invalid message")
+	log_v("ERROR: received an invalid message");
 
 	// clear status and re-draw
 	clrtoeol();
