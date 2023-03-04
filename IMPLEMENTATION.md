@@ -509,14 +509,13 @@ The player data stucture to hold the player name, player gold, player visibility
 typedef struct player{
     int x;                        
     int y;                    
-    bool** seenMap;
-    int gold;
-    int justCollected;
- 	addr_t IP;      
-    char letterAssigned;               
-    char* realName;
+    grid_t* seenGrid;
+ 	addr_t IP;                     
+    char realName[MaxNameLength];
+    char letterAsisgned;                      
+    int gold;                      
+    int justCollected;player_t; 
 } player_t; 
-
 ```
 
 ### Definition of function prototypes
@@ -524,18 +523,15 @@ typedef struct player{
 ```c
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 void player_delete(player_t* player);
-void player_addGold(player_t* player, int gold);
+void player_addGold(player_t* player, int* gold);
 int player_getGold(player_t* player);
-int player_getJustCollected(player_t* player);
-void player_addSeenMap(player_t* player, int row, int collumn, bool state);
+void player_addSeenMap(player_t* player, int* row, int* collumn);
 bool** player_getSeenMap(player_t* player);
-void player_setXPosition(player_t* player, int xPos);
+void player_setXPosition(player_t* player, int* xPos);
 int player_getXPosition(player_t* player);
-void player_setYPosition(player_t* player, int yPos);
+void player_setYPosition(player_t* player, int* yPos);
 int player_getYPosition(player_t* player);
-char* player_getRealName(player_t* player);
-char player_getLetterAssigned(player_t* player);
-addr_t player_getIP(player_t* player);
+char* player_getIP(player_t* player);
 ```
 
 ### Detailed pseudo code
@@ -549,11 +545,11 @@ Allocates memory for a new player object, instantiates values for gold, creates 
 	if player name is not less than max length 
 		truncate length of name given to have no more than maxCharacters
 		set name to truncated name
+	set name as given name
+	allocate memory for real name
 	set realName as name
 	sets ipAddress as ipAddress given
-	sets letter assigned as letter assigned
 	set gold to 0
-	sets just Collected to 0
 	allocate space for visibility map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays)
 	if map is instantiated
 		get random gridpoint from the map 

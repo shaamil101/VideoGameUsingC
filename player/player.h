@@ -28,6 +28,19 @@ typedef struct player player_t;
  *  NULL pointer if given node is NULL
  *  Null
 */
+
+/** player_new
+ * 
+ * Returns a pointer to a player
+ * 
+ * Caller provides:
+ *  valid player name, ipaddress, integer for max characters allowed in name
+ *  total rows and total collumns, and the letter assigned to the player
+ * We return:
+ *  Returns a pointer to a player with values instantiated 
+ *  NULL pointer if given node is NULL
+ *  Null
+*/
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 
 void player_delete(player_t* player);
