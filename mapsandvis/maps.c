@@ -91,7 +91,7 @@ map_t* maps_new(char* mapTextAddress)
   (*map).numCols = numcols;// set row and column numbers of map struct
   (*map).numRows = numrows;
 
-  mapNode_t*** grid = mem_malloc_assert(sizeof(mapNode_t*) * numrows , "maps_new: Unable to allocate memory for grid rows"); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
+  mapNode_t*** grid = mem_malloc_assert(sizeof(mapNode_t**) * numrows , "maps_new: Unable to allocate memory for grid rows"); // allocate memory for the 2d char array of the map struct, with number of rows and columns for matrix size
 	for (int i = 0; i < numrows; i++) {
     grid[i] = mem_malloc_assert(sizeof(mapNode_t*) * numcols, "maps_new: Unable to allocate memory for grid columns");
   }

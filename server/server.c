@@ -811,7 +811,7 @@ player_t *player_set(map_t *map, player_t *player)
   {
     for (int j = 0; j < maps_getYrange(map); j++)
     {
-      player_addSeenMap(player, i, j,false);
+      player_addSeenMap(player, i, j, false);
     }
   }
   return player;
@@ -1145,7 +1145,6 @@ void make_visible(player_t *player, map_t *map)
           player_addSeenMap(player,x,y,true);
         }
       }
-      free(seen);
     }
   }
 }

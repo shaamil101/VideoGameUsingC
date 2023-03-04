@@ -41,10 +41,15 @@ player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int 
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
-        playerNew->seenMap = mem_malloc_assert(yRange*sizeof(bool), "unable to allocate memory for player->seenMap");
+
+        bool** seenMap = mem_calloc_assert(yRange,sizeof(bool*), "unable to allocate memory for player->seenMap");
         for (int i = 0; i < yRange; i++) {
-            playerNew->seenMap[i] = mem_malloc_assert(xRange*sizeof(bool), "unable to allocate memory for player->seenMap");
+            seenMap[i] = mem_calloc_assert(xRange,sizeof(bool), "unable to allocate memory for player->seenMap");
+            for (int j = 0; j < xRange; j++) {
+                seenMap[i][j] = false;
+            }
         }
+        playerNew->seenMap = seenMap;
         playerNew->x = 0; 
         playerNew->y = 0; 
         return playerNew;
@@ -96,6 +101,7 @@ void player_setJustCollected(player_t* player, int justCollected)
 void player_addSeenMap(player_t* player, int x, int y, bool state){
     int row = y;
     int collumn = x;
+
     if (player){//null check
         player->seenMap[row][collumn] = state;
     }
