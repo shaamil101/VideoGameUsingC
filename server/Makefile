@@ -17,7 +17,10 @@ MAKE = make
 
 .PHONY: all server clean
 
-all: server
+all:
+	make -C ../player
+	make -C ../mapsandvis
+	make server
 
 server: server.o
 	$(CC) $(CFLAGS) server.o $(LIBFLAGS) -o server
@@ -28,6 +31,8 @@ server.o: server.h
 
 # clean up after our compilation
 clean:
+	rm -f ../player/player.a
+	rm -f ../mapsandvis/maps.a
 	rm -f server
 	rm -f core
 	rm -f *~ *.o

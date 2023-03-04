@@ -106,6 +106,10 @@ int maps_getRows(map_t* map);
 */
 int maps_getCols(map_t* map);
 
+int maps_getXrange(map_t* map);
+
+int maps_getYrange(map_t* map);
+
 /** maps_getMapNode
  * 
  * Returns the mapNode at the row, column index of a given map grid

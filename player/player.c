@@ -25,8 +25,8 @@ typedef struct player{
     char* realName;
 } player_t; 
 
-player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned){
-    if (playerName && maxCharacters && totalRows && totalCollumns){ //null check 
+player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int xRange, int yRange, char letterAssigned){
+    if (playerName && maxCharacters){ //null check 
         player_t* playerNew = mem_malloc(sizeof(player_t));
         if (strlen(playerName) > maxCharacters){
             char newName[maxCharacters];
@@ -41,7 +41,10 @@ player_t* player_new(char* playerName, addr_t ipAddress, int maxCharacters, int 
         playerNew->IP = ipAddress;
         playerNew->gold = 0;
         playerNew->justCollected = 0;
-        playerNew->seenMap = mem_malloc((totalRows * totalCollumns)*sizeof(bool));
+        playerNew->seenMap = mem_malloc_assert(yRange*sizeof(bool), "unable to allocate memory for player->seenMap");
+        for (int i = 0; i < yRange; i++) {
+            playerNew->seenMap[i] = mem_malloc_assert(xRange*sizeof(bool), "unable to allocate memory for player->seenMap");
+        }
         playerNew->x = 0; 
         playerNew->y = 0; 
         return playerNew;
@@ -90,9 +93,11 @@ void player_setJustCollected(player_t* player, int justCollected)
     return;
 }
 
-void player_addSeenMap(player_t* player, int collumn, int row, bool state){
+void player_addSeenMap(player_t* player, int x, int y, bool state){
+    int row = y;
+    int collumn = x;
     if (player){//null check
-        player->seenMap[collumn][row] = state;
+        player->seenMap[row][collumn] = state;
     }
 }
 

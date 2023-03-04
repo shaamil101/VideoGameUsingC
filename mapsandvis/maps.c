@@ -147,7 +147,7 @@ char* maps_basegrid(map_t* map)
 	char* charptr = mapstring;
   for (int r = 0; r < numrows; r++) { // for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
-      *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+      *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
   }
@@ -182,14 +182,14 @@ char* maps_spectatorgrid(map_t* map)
 	char* charptr = mapstring;
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
-      mapNode_t* node = (maps_getMapNode(map, r, c));
+      mapNode_t* node = (maps_getMapNode(map, c, r));
       if (node->item == '@') { // if is a player
         player_t* player = (player_t*)(map->grid[r][c]->type);
         *(charptr++) = player_getLetterAssigned(player);
       } else if (node->item == '*') { // if it's gold
         *(charptr++) = node->item;
       } else { // otherwise print normal
-        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
       }
     }
     *(charptr++) = '\n';// 	add a new line to the string (for next row)
@@ -231,9 +231,9 @@ char* maps_playergrid(map_t* map, player_t* player)
   for (int r = 0; r < numrows; r++) {// for each row r in the map (starting from 0)
     for (int c = 0; c < numcols; c++) {// 	for each column c in the map (starting from 0)
       if (seenMap[r][c]) { // if the player has seen the point before
-        mapNode_t* node = (maps_getMapNode(map, r, c));
+        mapNode_t* node = (maps_getMapNode(map, c, r));
         if (node != NULL) { // NULL check for node
-          if (isVisible(map, player_getYPosition(player), player_getXPosition(player), r, c)) { // if currently visible to player
+          if (isVisible(map, player_getXPosition(player), player_getYPosition(player), c, r)) { // if currently visible to player
             if (node->item == '@') { // if is a player
               player_t* playerAtPoint = (player_t*)(map->grid[r][c]->type);
               if (player_getLetterAssigned(playerAtPoint) == player_getLetterAssigned(player)) {
@@ -244,10 +244,10 @@ char* maps_playergrid(map_t* map, player_t* player)
             } else if (node->item == '*') { // if it's gold
               *(charptr++) = node->item;
             } else { // otherwise print normal
-              *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+              *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
             }
           } else { // not currently visible to player
-            *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, r, c)); // 	add char at that index of the map_t->grid 2d array to the string
+            *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
           }
         } else {
           log_v("maps_playergrid: got NULL mapNode in the map");
@@ -275,12 +275,16 @@ char* maps_playergrid(map_t* map, player_t* player)
  * We return
  *  bool for whether it's visible at that
 */
-bool isVisible(map_t* map, int playerRow, int playerCol, int testRow, int testCol)
+bool isVisible(map_t* map, int playerX, int playerY, int testX, int testY)
 {
   if (map == NULL) { // validate args
     log_v("isVisible: received NULL map pointer");
     return false;
   }
+  int playerRow = playerY;
+  int playerCol = playerX;
+  int testRow = testY;
+  int testCol = testX;
   int numRows = map->numRows;
   int numCols = map->numCols;
   if (playerRow < 0 || playerRow >= numRows) { // 	make sure both points row and column values are equal to or less than the map row and column (and non-negative)
@@ -411,6 +415,16 @@ int maps_getCols(map_t* map)
   return map->numCols;
 }
 
+int maps_getXrange(map_t* map)
+{
+  return(maps_getCols(map));
+}
+
+int maps_getYrange(map_t* map)
+{
+  return(maps_getRows(map));
+}
+
 /** maps_getMapNode
  * 
  * Returns the mapNode at the row, column index of a given map grid
@@ -423,8 +437,10 @@ int maps_getCols(map_t* map)
  *  mapNode pointer at that gridpoint
  *  Null pointer if anything invalid
 */
-mapNode_t* maps_getMapNode(map_t* map, int row, int col)
+mapNode_t* maps_getMapNode(map_t* map, int x, int y)
 {
+  int row = y;
+  int col = x;
   if (map == NULL) {
     log_v("map_getMapNode: map is NULL");
     return NULL;

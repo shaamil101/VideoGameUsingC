@@ -313,16 +313,16 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
 {
 
   maps_setTotalGoldLeft(map,gold_amount);
-  int numOfRows = maps_getRows(map);
-  log_d("server_dropGold: got number of rows in map to be %d", numOfRows);
-  int numOfColumns = maps_getCols(map);
-  log_d("server_dropGold: got number of cols in map to be %d", numOfColumns);
+  int xRange = maps_getXrange(map);
+  log_d("server_dropGold: got xRange in map to be %d", xRange);
+  int yRange = maps_getYrange(map);
+  log_d("server_dropGold: got yRange in map to be %d", yRange);
   
   //Counting the amount of open spaces where gold can go
   int open_spaces = 0;
-  for (int i = 0; i < numOfRows; i++)
+  for (int i = 0; i < xRange; i++)
   {
-    for (int j = 0; j < numOfColumns; j++)
+    for (int j = 0; j < yRange; j++)
     {
       if (maps_getMapNode(map, i, j) != NULL)
       {
@@ -368,9 +368,9 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
 
     //Loop through, and add gold to this location
     int space = 0;
-    for (int i = 0; i < numOfRows; i++)
+    for (int i = 0; i < xRange; i++)
     {
-      for (int j = 0; j < numOfColumns; j++)
+      for (int j = 0; j < yRange; j++)
       {
         if (maps_getMapNode(map, i, j) != NULL)
         {
@@ -450,7 +450,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 */
 
                 // Create new player
-                player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getRows(game->map), maps_getCols(game->map), '@');
+                player_t *newPlayer = player_new(real_name, from, MaxNameLength, maps_getXrange(game->map), maps_getYrange(game->map), '@');
                 newPlayer = player_set(game->map, newPlayer);
 
                 // Add the player to the game struct array
@@ -767,9 +767,9 @@ player_t *player_set(map_t *map, player_t *player)
   }
   //Loop through grid to determine amount of open spaces
   int open_spaces = 0;
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols(map); j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
       if (maps_getMapNode(map, i, j) != NULL)
       {
@@ -787,9 +787,9 @@ player_t *player_set(map_t *map, player_t *player)
 
   //Loop through open spaces and place player there
   int space = 0;
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols(map); j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
       if (maps_getMapNode(map, i, j) != NULL)
       {
@@ -807,9 +807,9 @@ player_t *player_set(map_t *map, player_t *player)
   }
 
   //set whole grid to not visible
-  for (int i = 0; i < maps_getRows(map); i++)
+  for (int i = 0; i < maps_getXrange(map); i++)
   {
-    for (int j = 0; j < maps_getCols(map); j++)
+    for (int j = 0; j < maps_getYrange(map); j++)
     {
       player_addSeenMap(player, i, j,false);
     }
@@ -1015,7 +1015,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
     player_addGold(player,pile->amount);
     char_to_switch = '.';  //Player is switching with empty space
     item_to_switch = NULL; //Player is switching with null type
-    //delete_gold_pile(pile);
+    delete_gold_pile(pile);
   }
   else if (maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y))  == '#')
   { //if going down a hallway
@@ -1133,12 +1133,12 @@ player_t *searchByAddress(addr_t from)
 void make_visible(player_t *player, map_t *map)
 {
   //loop through all nodes in grid
-  for (int x = 0; x < maps_getRows(map); x++)
+  for (int x = 0; x < maps_getXrange(map); x++)
   {
-    for (int y = 0; y < maps_getCols(map); y++)
+    for (int y = 0; y < maps_getYrange(map); y++)
     {
       bool** seen = player_getSeenMap(player);
-      if (!(seen[x][y]))
+      if (!(seen[y][x]))
       {
         if (isVisible(map, player_getXPosition(player), player_getYPosition(player), x, y)) //check visiblity of gridnode
         {
