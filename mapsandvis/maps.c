@@ -281,7 +281,11 @@ char* maps_playergrid(map_t* map, player_t* player)
             }
           } else { // not currently visible to player
             if (node->item == '@' || node->item == '*') {// if it is a player or gold
-              *(charptr++) = '.'; // make it an empty room slot instead
+              if (maps_ifHallwayNode(node)) { // if the player is in a hallway
+                *(charptr++) = '#'; // rest to hallway
+              } else {
+                *(charptr++) = '.'; // make it an empty room slot instead
+              }
             } else { // not player or gold and not visible (but already seen by player), add normally
               *(charptr++) = maps_getMapNodeItem(node); // 	add char at that index of the map_t->grid 2d array to the string
             }
