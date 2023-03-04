@@ -53,21 +53,16 @@ void handleInvalidMessage();
 int main(const int argc, char* argv[]) {
 	// start the log module
 	log_init(stderr);
-
 	// parse the arguments
 	client_t* client = parseArgs(argc, argv);
-
-	if (client != NULL) {
-		startClient(client);
-
-		message_loop(client, 0, NULL, handleInputs, handleMessage);
-		message_done();
-
-		mem_free(client);
-	} else {
-		mem_free(client);
-		return 1;
-	}
+	// start the client
+	startClient(client);
+	// loop and listen for user key strokes
+	message_loop(client, 0, NULL, handleInputs, handleMessage);
+	message_done();
+	// free the client
+	mem_free(client);
+	return 0;
 }
 
 /**************** parseArgs() ****************/
@@ -88,18 +83,18 @@ static client_t* parseArgs(const int argc, char* argv[]) {
 	// if incorrect number of arguments given log and return
 	if (argc < 3 || argc > 4) {
 		log_s("%s: Usage: ./client hostName port [playerName]\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if port number can't be fetched log and return
 	int clientPort = message_init(NULL);
 	if (clientPort == 0) {
 		log_s("%s: Error: not able to fetch client port number\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if server address can't be set log and return
 	if (!message_setAddr(argv[1], argv[2], &(client->serverAddress))) { 
 		log_s("%s: Error: failed to set server address\n", argv[0]);
-		return NULL;
+		exit(1);
 	}
 	// if the are only 3 args client is a spectator and client object is updated
 	if (argc == 3) {
@@ -238,6 +233,9 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
  * Output: none
 */
 void handleQuit(const char* message) {
+	// end ncurses
+	nocbreak();
+	endwin();
 	// build status message
 	char* copy = mem_assert(mem_malloc(strlen(message)+1), "allocating for handle quit message copy");
 	strcpy(copy, message);
@@ -245,9 +243,7 @@ void handleQuit(const char* message) {
 
 	// log status message to stderr
 	log_s("%s\n", status);
-
-	nocbreak();
-	endwin();
+	// free the copy
 	mem_free(copy);
 }
 
