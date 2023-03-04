@@ -171,6 +171,7 @@ void playerTable_delete(playerTable_t *playerTable, int yRange)
         free(playerTable);
 }
 
+
 /* Constructor to create a new counter array node */
 game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 {
@@ -1164,9 +1165,8 @@ void free_everything(game_t *game)
         }
 
         // free
+
         playerTable_delete(game->players, maps_getYrange(game->map));
-        maps_delete(game->map);
-        free(game);
 }
 
 bool isNumber(char number[])
