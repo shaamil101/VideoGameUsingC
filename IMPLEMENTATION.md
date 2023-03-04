@@ -629,12 +629,17 @@ player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters
 void player_delete(player_t* player);
 void player_addGold(player_t* player, int* gold);
 int player_getGold(player_t* player);
+int player_getJustCollected(player_t* player);
+void player_setJustCollected(player_t* player, int justCollected);
 void player_addSeenMap(player_t* player, int* row, int* collumn);
 bool** player_getSeenMap(player_t* player);
 void player_setXPosition(player_t* player, int* xPos);
 int player_getXPosition(player_t* player);
 void player_setYPosition(player_t* player, int* yPos);
 int player_getYPosition(player_t* player);
+char* player_getRealName(player_t* player);
+char player_getLetterAssigned(player_t* player);
+void player_setLetterAssigned(player_t* player, char letter);
 char* player_getIP(player_t* player);
 ```
 
@@ -642,31 +647,35 @@ char* player_getIP(player_t* player);
 
 #### player_new
 
-Allocates memory for a new player object, instantiates values for gold, creates visibility map, gets random location for player, stores the players name (truncates if necessary), sets the ipAddress as the address given
+Allocates memory for a new player object, instantiates and allocates memory when necessary for values that player holds
 
 	validate args 
-	allocate space for new player object
-	if player name is not less than max length 
-		truncate length of name given to have no more than maxCharacters
-		set name to truncated name
-	set name as given name
-	allocate memory for real name
-	set realName as name
-	sets ipAddress as ipAddress given
-	set gold to 0
-	allocate space for visibility map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays)
-	if map is instantiated
-		get random gridpoint from the map 
-		set x to collumn from gridpoint
-		set y to row from gridpoint
-	return player object
+		allocate space for new player object
+		if player name is not less than max length 
+			allocate space for name
+			truncate length of name given to have no more than maxCharacters and store in name
+			
+		else
+			allocate space for name
+			set name to name given 
+		set playername as given name
+		set letter assigned as letter assigned given
+		sets ipAddress as ipAddress given
+		set gold to 0
+		set just collected to 0
+		allocate space for bool pointer seen map with the amount of rows (number of arrays in the outer array) and amount of collumns (number of elements in inner arrays). Setting all elements within map as false
+		set x to 0
+		set y to 0
+		return player object
+	return NULL
 
 #### player_delete
 
 frees the player object and the values stored within it 
 
 	if player is valid
-		free visability map
+		free each array in the seen map
+		free seen map 
 		free realName 
 		free player
 	return
@@ -692,6 +701,21 @@ returns an integer representing the players gold
 		return gold 
 	return null
 
+#### player_getJustCollected
+
+Returns the players just Collected
+
+	if player is valid
+		return the players just collected value 
+	return -1
+
+#### player_setJustCollected
+
+Aets the just collected value given an integer 
+
+	if player does not equal null and just collected is greater than or equal to 0
+		set player just collected as interger given 
+	return 
 
 #### player_addSeenMap
 
@@ -724,7 +748,7 @@ Returns the players current x position on the map
 	if player is valid
 		get players x position 
 		return x position 
-	return null
+	return -1
 
 #### player_setYPosition
 Sets the players current y position on the map. Server module checks if y is in range. 
@@ -739,7 +763,7 @@ Returns the players current y position on the map
 	if player is valid
 		get players y position 
 		return y position 
-	return null
+	return -1
 
 #### player_getRealName
 
@@ -750,6 +774,23 @@ Returns the players real name (truncated version less than max length) given at 
 		return real name 
 	return null
 
+
+### player_getLetterAssigned
+
+Returns the players letter assigned (char)
+
+	if player is valid 
+		get and return the letter assigned 
+	return null
+
+### player_setLetterAssigned
+
+ Sets the players letter assigned to the value given
+
+	if player is valid and the letter is uppercase
+		set the letter as the one given 
+	return null
+
 ### player_getIP
 
 Returns the players IP address
@@ -757,7 +798,7 @@ Returns the players IP address
 	if player is valid
 		get players ip address
 		return ip address
-	return null
+	return message no addr
 
 ---
 

@@ -362,17 +362,21 @@ The main data structure in the player module will be the player_t struct. This s
 ### Functional decomposition
 
 1. *player_new*
-2. *player_getGold*
-3. *player_setGold*
-4. *player_getVisibilityMap*
-5. *player_setVisibilityMap*
-6. *player_getXPosition*
-7. *player_setXPosition*
-8. *player_getYPosition*
-9. *player_setYPosition*
-10. *player_setPosition*
-11. *player_getRealName*
-12. *player_delete*
+2. *player_delete*
+3. *player_getGold*
+4. *player_setGold*
+5. *player_getJustCollected*
+6. *player_setJustCollected*
+7. *player_getSeenMap*
+8. *player_setSeenMap*
+9. *player_getXPosition*
+10. *player_setXPosition*
+11. *player_getYPosition*
+12. *player_setYPosition*
+13. *player_getRealName*
+14. *player_getLetterAssigned*
+15. *player_setLetterAssigned*
+16. *player_getIP*
 
 ### Pseudo code for logic/algorithmic flow
 
@@ -390,15 +394,23 @@ Functions in the player module will be called by actions in the server module. E
 #### player_getGold
     
 > Returns an integer representing the players current gold
-    
+
 #### player_addGold
 
 > Updates the integer representing the players current gold
 
+#### player_getJustCollected
+
+> returns the players just collected value 
+
+#### player_setJustCollected
+
+> returns the players just collected value
+
 #### player_getSeenMap
 
 > Returns an array of arrays with each element in the outer array representing a row in the map and each inner array representing a collumn in that array 
-> The values stored in each inner array will either be 0 (if that coordinate in that map has not been seen) and 1 (if that coordinate in that map has been seen)
+> The values stored in each inner array will either be false (if that coordinate in that map has not been seen) and true (if that coordinate in that map has been seen)
 
 #### player_addSeenMap
 
@@ -424,6 +436,14 @@ Functions in the player module will be called by actions in the server module. E
 
 > Returns the players real name (truncated version less than max length) given at the start of the game)
 
+### player_getLetterAssigned
+
+> Returns the players letter assigned (char)
+
+### player_setLetterAssigned
+
+> Sets the players letter assigned to the value given
+
 #### player_getIP
 
 > Returns the players IP address
@@ -431,5 +451,5 @@ Functions in the player module will be called by actions in the server module. E
 
 ### Major data structures
 
-The player structure will store the (integer) amount of gold a player has, the position of the player, an array of arrays of the size of the map that masks where the player has been visible.
+The player structure will store the players gold, name, seen map, x and y, just collected, letter assigned that are accessed by the server. 
 
