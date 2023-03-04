@@ -3,6 +3,9 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "mem.h"
+#include "player.h"
+#include "mapsandvis.h"
 #include <string.h>
 #include "support/message.h"
 #include "support/log.h"
@@ -67,7 +70,7 @@ typedef struct playerNode
 /* A data structure which holds the player, their address, and their letter */
 playerNode_t *playerNode_new()
 {
-        playerNode_t *playerNode = malloc(sizeof(playerNode_t));
+        playerNode_t *playerNode = mem_malloc(sizeof(playerNode_t));
         return playerNode;
 }
 
@@ -97,7 +100,7 @@ typedef struct gold
 /****************new_gold_pile****************/
 gold_pile_t *new_gold_pile(int size)
 {
-  gold_pile_t *pile = malloc(sizeof(gold_pile_t)); //allocate space for pile
+  gold_pile_t *pile = mem_malloc(sizeof(gold_pile_t)); //allocate space for pile
   if (pile == NULL)
   {
     return NULL;
@@ -119,13 +122,13 @@ gold_t *gold_new(int numberOfPiles)
 {
         gold_t goldList;
         goldList.num_piles = numberOfPiles;
-        gold_t *goldList.piles = malloc(goldList.num_piles * sizeof(gold_pile_t));
+        gold_t *goldList.piles = mem_malloc(goldList.num_piles * sizeof(gold_pile_t));
 }
 
 /* Create a new spectator */
 spec_t *spectator_new(addr_t address)
 {
-        spec_t *spectator = malloc(sizeof(spec_t));
+        spec_t *spectator = mem_malloc(sizeof(spec_t));
         spectator->address = address;
         return(spectator);
 }
@@ -133,7 +136,7 @@ spec_t *spectator_new(addr_t address)
 /* Create a new player table */
 playerTable_t *playerTable_new()
 {
-        playerTable_t *playerTable = malloc(sizeof(playerTable_t));
+        playerTable_t *playerTable = mem_malloc(sizeof(playerTable_t));
         for (int i = 0; i < MaxPlayers; i++)
         {
                 playerTable->arr[i] = NULL;
@@ -169,7 +172,7 @@ typedef struct game
 /* Constructor to create a new counter array node */
 game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 {
-        game_t *game = calloc(1, sizeof(game_t));
+        game_t *game = mem_calloc(1, sizeof(game_t));
 
         // Error check
         if (game == NULL)
@@ -204,7 +207,7 @@ int main(int argc, char *argv[])
 
         // Can assume a map file is valid, but need to infer, but must infer *NR* and *NC* by reading the file.
         // A *map file* is a text file with exactly *NC* lines and in which every line has exactly *NR* characters.
-        char *map_pathname = (char *)calloc(100, sizeof(char));
+        char *map_pathname = (char *)mem_calloc(100, sizeof(char));
         strcpy(map_pathname, ((char *)argv[1]));
 
         // Initialize the logging file
@@ -291,7 +294,7 @@ int main(int argc, char *argv[])
         log_d("Annoucing the port! Ready at port '%d'", port_num);
 
         //Create an internet address; initialize in in a call to message_setAddr
-        addr_t addr = message_noAddr(); //calloc(1, sizeof(addr_t));
+        addr_t addr = message_noAddr(); //mem_calloc(1, sizeof(addr_t));
 
         message_loop(&addr, 0, NULL, NULL, handleMessage);
         log_v("thanks for playing!");
@@ -494,7 +497,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 int size2 = strlen("GRID") + 16;
 
                 // Sending map message
-                char *map_message = calloc(size2, sizeof(char));
+                char *map_message = mem_calloc(size2, sizeof(char));
                 if (ncols < 30)
                 {
                         sprintf(map_message, "GRID %d %d", nrows, 30);
@@ -536,7 +539,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 int size2 = strlen("GRID") + 15 + 1;
 
                 // Sending map message
-                char *map_message = calloc(size2, sizeof(char));
+                char *map_message = mem_calloc(size2, sizeof(char));
                 sprintf(map_message, "GRID %d %d", nrows, ncols);
                 message_send(from, map_message);
                 free(map_message);
@@ -686,7 +689,7 @@ void send_player_display(game_t *game, player_t *player, addr_t from)
         // create the grid string and determine the size
         char *mapstring = maps_playergrid(game->map, player);
         int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
-        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
+        char *DISPLAYMESSAGE = mem_calloc(size, sizeof(char));
 
         // begin sending the message
         strcpy(DISPLAYMESSAGE, "DISPLAY\n");
@@ -712,7 +715,7 @@ void send_spectator_display(game_t *game, addr_t from)
         // create the grid string and determine the size
         char *mapstring = maps_spectatorgrid(game->map);
         int size = strlen(mapstring) + strlen("DISPLAY\n") + 1;
-        char *DISPLAYMESSAGE = calloc(size, sizeof(char));
+        char *DISPLAYMESSAGE = mem_calloc(size, sizeof(char));
 
         // begin sending the message
         strcpy(DISPLAYMESSAGE, "DISPLAY\n");
@@ -729,7 +732,7 @@ void send_spectator_gold(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
         int len = strlen("GOLD ") + 15 + 1;
-        char *goldmessage_spectator = calloc(len, sizeof(char));
+        char *goldmessage_spectator = mem_calloc(len, sizeof(char));
 
         // determine gold comp
         int n = 0;
@@ -744,7 +747,7 @@ void send_spectator_gold(game_t *game, addr_t from)
 /**************** createGoldMessage ****************/
 char *createGoldMessage(map_t *map, player_t *player)
 {
-  char *message = malloc(20 * sizeof(char)); //allocate at least 20 chars of space
+  char *message = mem_malloc(20 * sizeof(char)); //allocate at least 20 chars of space
   int just_collected = player->just_collected; //Need to check with Jake on this
   int collected = player_getGold(player);
   int left = maps_getTotalGoldLeft( map);
@@ -819,7 +822,7 @@ char *getCharacterBasedOnIndex(int i)
     }
     else
     {
-        toReturn = (char *)malloc(sizeof(char));
+        toReturn = (char *)mem_malloc(sizeof(char));
         *toReturn = (char)(i + 65);
     }
     return toReturn;
@@ -1055,7 +1058,7 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
 char *game_over_summary()
 {
         // create the string
-        char *message_to_send = (char *)calloc(1000, sizeof(char));
+        char *message_to_send = (char *)mem_calloc(1000, sizeof(char));
         strcpy(message_to_send, "QUIT ");
 
         strcat(message_to_send, "Thanks for playing!\n");
@@ -1075,10 +1078,10 @@ char *game_over_summary()
                 log_v(player_letter);
 
                 int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]));
-                char *player_purse_char = (char *)calloc(10, sizeof(char));
+                char *player_purse_char = (char *)mem_calloc(10, sizeof(char));
                 sprintf(player_purse_char, "%d", player_purse);
 
-                char *real_name = (char *)calloc(25, sizeof(char));
+                char *real_name = (char *)mem_calloc(25, sizeof(char));
                 strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]));
 
                 // Add the portions of the table
