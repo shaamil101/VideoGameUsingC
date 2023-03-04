@@ -53,8 +53,6 @@ map_t* maps_new(char* mapTextAddress);
 */
 char* maps_basegrid(map_t* map);
 
-char* maps_visiblebasegrid(map_t* map, int row, int col);
-
 /** maps_spectatorgrid
  * 
  * Renders the map into the ascii string to pass to the spectator client

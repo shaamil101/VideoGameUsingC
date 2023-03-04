@@ -163,32 +163,6 @@ char* maps_basegrid(map_t* map)
 	return mapstring; // return the string
 }
 
-char* maps_visiblebasegrid(map_t* map, int row, int col)
-{
-  if (map == NULL) {// validate args
-    log_v("Got NULL map pointer in maps_basegrid");
-    return NULL;
-  }
-  int numrows = maps_getRows(map);
-  int numcols = maps_getCols(map);
-	char* mapstring = mem_calloc_assert((numrows+1)*(numcols+1)+1, sizeof(char), "Unable to allocate memory for map string"); // allocate memory for string holding grid
-	char* charptr = mapstring;
-  for (int r = 0; r < numrows; r++) { // for each row r in the map (starting from 0)
-    for (int c = 0; c < numcols; c++) { // 	for each column c in the map (starting from 0)
-      if (row == r && col == c) {
-        *(charptr++) = '@';
-      } else if (maps_isVisible(map, col, row, c, r)) {
-        *(charptr++) = maps_getMapNodeItem(maps_getMapNode(map, c, r)); // 	add char at that index of the map_t->grid 2d array to the string
-      } else {
-        *(charptr++) = ' '; 
-      }
-    }
-    *(charptr++) = '\n';// 	add a new line to the string (for next row)
-  }
-	*(charptr++) = '\0'; // make last char a terminating null
-	return mapstring; // return the string
-}
-
 /** maps_spectatorgrid
  * 
  * Renders the map into the ascii string to pass to the spectator client
