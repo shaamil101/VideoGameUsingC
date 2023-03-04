@@ -406,7 +406,7 @@ void handleInvalidMessage() {
 	// print status
 	mvprintw(0, 0, "ERROR: received an invalid message");
 	// log status
-	log_v("ERROR: received an invalid message")
+	log_v("ERROR: received an invalid message");
 
 	// clear status and re-draw
 	clrtoeol();
