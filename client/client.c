@@ -170,8 +170,8 @@ bool handleInputs(void* arg) {
 	
 	// build the keyMessage to be sent to the server
 	sprintf(keyMessage, "KEY %c", keyPressed); 
-	// if the client is not a spectator send it to the server
-	if (!client->isSpectator) {
+	// if the client is not a spectator send it to the server or Q is pressed
+	if (!client->isSpectator || keyPressed == 81) {
 		message_send(client->serverAddress, keyMessage);
 	}
 
@@ -234,6 +234,7 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
 */
 void handleQuit(const char* message) {
 	// end ncurses
+
 	nocbreak();
 	endwin();
 	// build status message

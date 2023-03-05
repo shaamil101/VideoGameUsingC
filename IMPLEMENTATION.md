@@ -22,6 +22,7 @@ Jack is writing client program
 We need one primary data structure for the entire game logic. The game structure has the following elements:
 
 ```c
+<<<<<<< HEAD
 typedef struct game {
   //Tracking gold left and collected
   int GoldNumPilesLeft;
@@ -34,8 +35,21 @@ typedef struct game {
   player_t* players[MaxPlayers]; //array of player struct
   int numPlayer; 
   
+=======
+typedef struct game
+{
+        // Instance variables
+        char *playersChar; // holds the char the tabular summary
+        int numplayers;
+        int num_nuggets;
+        spec_t *spectator;
+        map_t *map;
+        playerTable_t *players; // holds a player with the table
+>>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 } game_t;
+```
 
+<<<<<<< HEAD
 typedef struct player {
   int row;                         // row
   int col;                         // column 
@@ -46,6 +60,26 @@ typedef struct player {
   int justCollected;
   grid_t* seenGrid;
 } player_t;
+=======
+A data structure which holds the player, their address, and their letter 
+typedef struct playerNode
+```c
+typedef struct playerNode
+{
+        addr_t address;
+        char *playerLetter;
+        player_t *player;
+} playerNode_t;
+```
+A data structure which holds all of the players
+```c
+typedef struct playerTable
+{
+        playerNode_t *arr[MaxPlayers];
+} playerTable_t;
+```
+A data structure which holds the one spectator
+>>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 
 ```c
 typedef struct spectator
@@ -69,7 +103,10 @@ typedef struct gold
   gold_pile_t* piles;
   int num_piles;
 } gold_t;
+<<<<<<< HEAD
 
+=======
+>>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 ```
 ### Definition of function prototypes
 
@@ -179,6 +216,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 ```
 
 #### `handleMessage`:
+<<<<<<< HEAD
 
 	Parses message by message type
 	if message type is 'PLAY':
@@ -208,6 +246,185 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 				Reply with 'DISPLAY' message accordingly
 			for all spectators:
 				Reply with master 'DISPLAY' message
+=======
+
+	Check if the arg parameter (which is expected to be an addr_t pointer) is NULL. If it is NULL, return true.
+	Store the from parameter in the addr_t pointer otherp that was passed in as arg. This addr_t pointer is used to keep track of the current sender, so that future messages can be sent back to that sender.
+	Check if the message starts with the string "PLAY ". If it does, continue with the following steps:
+		Check if the number of players in the current game has already reached the maximum number of players allowed (MaxPlayers). If it has, print an error message to stderr and return false.
+		Parse the player's name from the rest of the message by looking for a space character (' ') and splitting the message there. If no space character is found, print an error message to stderr and return false.
+		Create a new player_t object with the given name and other parameters (like the player's starting position and appearance), and add it to the game's map.
+		Create a new playerNode_t object to hold the new player and add it to the game's players array at the first available index.
+		Assign a unique letter to the new player based on the current number of players in the game, and send a message back to the player indicating their assigned letter.
+		Increment the number of players in the game.
+		Send updated game information (like the map, gold, and display) to all players and spectators.
+		Return false.
+	Check if the message starts with the string "SPECTATE". If it does, continue with the following steps:
+		Check if there is already a spectator in the game. If there is, send them a game over summary message and remove them from the game.
+		Create a new spectator_t object with the sender's address and add it to the game's spectator field.
+		Send updated game information (like the map, gold, and display) to the new spectator.
+		Return false.
+	Check if the message starts with the string "KEY Q". If it does, continue with the following steps:
+		Set the game's quit field to true.
+		Return true.
+	If none of the above conditions match, return false.
+
+The function creates a new gold pile with the specified amount of gold.
+
+```c
+gold_pile_t *new_gold_pile(int size);
+```
+
+#### `new_gold_pile`:
+
+	Allocate memory for a new gold pile of type gold_pile_t and assign it to a pointer variable named pile
+    if pile is NULL:
+        return NULL
+    else:
+        set the amount of gold in the pile to size
+        return pile
+
+The function creates a new gold pile with the specified amount of gold.
+
+```c
+void send_player_display(game_t *game, player_t *player, addr_t from);
+```
+
+#### `send_player_display`:
+
+	Start by creating a string that represents the game board.
+	Determine the size of the message to be sent by adding the length of the game board string and the string "DISPLAY\n".
+	Allocate memory for a new string to hold the display message.
+	Copy the string "DISPLAY\n" to the beginning of the new display message string.
+	Concatenate the game board string to the end of the display message string.
+	Send the display message to the specified player address.
+	Free the memory used for the game board string and display message string.
+
+The function is to send a message containing information about the amount of gold left in the game to a spectator.
+
+```c
+void send_spectator_gold(game_t *game, addr_t from)
+```
+
+#### `send_spectator_gold`:
+
+	Calculate the length of the message to be sent
+	Allocate memory for the message string
+	Determine the current gold count in the game
+	Format the message string with the gold count
+	Send the message to the spectator
+	Free the memory allocated for the message string
+
+This function is called when a new player is created or when a game is started to set the initial position of the player on the map and initialize the seen map with false values for all positions.
+```c
+player_t *player_set(map_t *map, player_t *player)
+```
+
+#### `player_set`:
+
+	If map is null, then return null and log an error message
+  	Set a variable called open_spaces to 0
+  	Loop through the rows of the map and for each column:
+    Check if the grid is not null
+      Check if the character at the current grid position is a period
+        If so, increment open_spaces counter by 1
+  	Generate a random integer called player_location between 0 and the value of open_spaces
+  	Set a variable called space to 0
+ 	 Loop through the rows of the map and for each column:
+    Check if the grid is not null
+      Check if the character at the current grid position is a period
+        If so, check if space is equal to player_location
+          If it is, set the player's X and Y positions to the current grid position
+          If it is not, increment the space counter by 1
+  	Loop through the rows of the map and for each column:
+    Set the player's seen map for the current grid position to false
+  	Return the player pointer
+
+This function  is responsible for moving the player within the game map. It takes the current map, player object, and the new x and y coordinates to move the player to. The function checks for the type of the item present in the new position and performs different actions based on it. If it's a gold pile, it subtracts the gold from the map and adds it to the player's inventory. If it's a hallway, it simply switches the character with an empty space. If it's another player, it swaps the positions of the two players. Finally, the function updates the game map with the new positions of the players and the items
+
+```c
+void player_move(map_t *map, player_t *player, int new_x, int new_y)
+```
+
+#### `player_move`:
+
+	Start by getting the player's current x and y positions.
+	Determine the character and item types of the node at the new x and y position on the map.
+	If the node contains a pile of gold, subtract the amount of gold from the total gold remaining on the map, add it to the player's gold count, set the character to an empty space, set the item type to null, and delete the gold pile.
+	If the node contains a hallway, set the character to an empty space and the item type to null.
+	If the node contains another player, swap the two players' positions, set the character to the character at the new position, and set the item type to the item type at the new position.
+	Otherwise, set the character to the character at the new position, and set the item type to the item type at the new position.
+	Set the player's x and y positions to the new position.
+	Set the character and item type of the node at the player's previous position to the character and item type of the new position.
+	Make the area around the player visible on the map.
+
+This function creates a string containing a summary of the game results for all players, including their assigned letter, amount of gold, and real name. This function is called at the end of the game to display the summary to the players. The summary can be sent as a message to the players, displayed on a screen, or saved to a file for future reference. The returned string can be used in a variety of ways, depending on the implementation of the game.
+
+```c
+char *game_over_summary()
+```
+
+#### `game_over_summary`:
+
+	Create a string variable to hold the game over summary message.
+	Allocate memory for the message string.
+	Add the "QUIT" command to the beginning of the message.
+	Append a thank you message to the message string.
+	Append a heading for the player summary table to the message string.
+	Append a separator line to the message string.
+	Create a temporary variable to hold the number of players in the game.
+	Use a loop to iterate through all players and add their information to the summary table.
+	Get the player's assigned letter, gold count, and real name.
+	Convert the player's gold count to a string format.
+	Append the player's information to the message string in the proper format.
+	Decrement the number of players to iterate through and free any memory allocated for temporary variables.
+	Print the message string to the console for verification.
+	Return the message string.
+
+This function is used to update a player's "seen map" by marking nodes as visible if they are within the player's line of sight. The function takes in a player and a map, and uses the player's current position and line of sight range to determine which nodes should be marked as visible. This function is typically called after a player moves or the game state changes, in order to update the player's view of the game world.
+
+```c
+void make_visible(player_t *player, map_t *map)
+```
+
+#### `make_visible`:
+
+	Loop through all the nodes in the map.
+	For each node, check if the player has not already seen it before.
+	If the node is visible from the player's current position, mark it as seen on the player's seen map.
+	Repeat for all nodes in the map.
+
+This function is used to deallocate all the memory that was allocated during the game. When the game is over or the server is shutting down, it's important to free up all the memory that was allocated to avoid memory leaks. The free_everything() function does this by freeing all the memory that was allocated to the game object, including the map, the player table, and the spectator.
+```c
+void free_everything(game_t *game)
+```
+
+#### `make_visible`:
+
+	Check if the game has a spectator. If yes, free the memory allocated to it.
+	Delete the playerTable and all the players in it.
+	Delete the map and all the nodes in it.
+	Free the memory allocated to the game object.
+
+This function determines whether a given node on a map is moveable or not. It takes a pointer to a map node as input and returns a boolean value indicating whether it is safe to move onto the node or not. The function checks if the node is not null and if it contains a valid character ('.', '*', '@', or '#') which denotes empty space, a box, the player, or a target respectively.
+
+```c
+bool moveable(mapNode_t *node)
+```
+
+#### `moveable`:
+
+	Define a function called "moveable" that takes a single argument, a pointer to a mapNode_t object.
+	Create a local variable called "this_node" and set it equal to the input argument.
+	Create a character variable called "c".
+	Check if "this_node" is not NULL.
+	If "this_node" is not NULL, get the value of the mapNode item and assign it to "c".
+	If "this_node" is NULL, return false.
+	Check if "c" is equal to '.', '*', '@', or '#'.
+	If "c" is equal to any of these characters, return true.
+	If "c" is not equal to any of these characters, return false
+
+>>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 
 A function that accepts a player and removes it by calling the remove player 
 
@@ -792,20 +1009,24 @@ Returns the bool for whether or not a node is a hallway, stored in node struct
 
 ## Player
 
+ The player module provides a player data structure to store and update the values of the player. It is called by the server module throughout game play. 
+ 
 ### Data structures
 
-The player data stucture to hold the player name, player gold, player visibility map, player x and y position.
+The player data stucture holds the player name, seenMap, player gold, player justCollected (last amount of gold picked up), player IP address, player x and y position.
+
+seenMap is a 2d array representing the grid points, and it stores booleans representing if the player has seen that point (true) or if they have not (false)
 
 ```c
 typedef struct player{
     int x;                        
     int y;                    
-    grid_t* seenGrid;
- 	addr_t IP;                     
+    bool** seenMap;
+ 		addr_t IP;                     
     char realName[MaxNameLength];
     char letterAsisgned;                      
     int gold;                      
-    int justCollected;player_t; 
+    int justCollected;
 } player_t; 
 ```
 
@@ -814,15 +1035,15 @@ typedef struct player{
 ```c
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 void player_delete(player_t* player);
-void player_addGold(player_t* player, int* gold);
+void player_addGold(player_t* player, int gold);
 int player_getGold(player_t* player);
 int player_getJustCollected(player_t* player);
 void player_setJustCollected(player_t* player, int justCollected);
-void player_addSeenMap(player_t* player, int* row, int* collumn);
+void player_addSeenMap(player_t* player, int row, int collumn);
 bool** player_getSeenMap(player_t* player);
-void player_setXPosition(player_t* player, int* xPos);
+void player_setXPosition(player_t* player, int xPos);
 int player_getXPosition(player_t* player);
-void player_setYPosition(player_t* player, int* yPos);
+void player_setYPosition(player_t* player, int yPos);
 int player_getYPosition(player_t* player);
 char* player_getRealName(player_t* player);
 char player_getLetterAssigned(player_t* player);

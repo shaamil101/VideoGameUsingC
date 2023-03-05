@@ -196,7 +196,14 @@ game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 }
 
 game_t *game;
-
+/**************** main ****************/
+/*
+Main performs a series of checks and initializes the necessary components before starting the game. 
+It validates the number of arguments passed to the program, 
+initializes the logging file, and sets up the game environment based on the arguments provided. 
+Finally, it starts the server and waits for clients to connect. Once the game is complete,
+ it cleans up any resources used by the program and exits.
+*/
 int main(int argc, char *argv[])
 {
         // Validate the number arguments
@@ -428,7 +435,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 // check and make sure there are not more than MaxPlayers users
                 if (game->numplayers >= MaxPlayers)
                 {
-                        fprintf(stderr, "Sorry, no more than MaxPlayers players can join! Please try again later.\n");
+                        fprintf(stderr, "Sorry, no more than MaxPlayers=%d players can join! Please try again later.\n", MaxPlayers);
+                        char *message_to_send = "QUIT Sorry, we've reached the max number of players in the server! Please try joining a different server.\n";
+                        message_send(from, message_to_send);
                         return false;
                 }
 
