@@ -22,20 +22,6 @@ Jack is writing client program
 We need one primary data structure for the entire game logic. The game structure has the following elements:
 
 ```c
-<<<<<<< HEAD
-typedef struct game {
-  //Tracking gold left and collected
-  int GoldNumPilesLeft;
-  int goldCollected;             
-  int goldLeft; 
-  addr_t spectator; //Spectator address
-  grid_t* mainGrid;  //Stores the m
-  int numberOfRows;
-  int numberOfColumns;
-  player_t* players[MaxPlayers]; //array of player struct
-  int numPlayer; 
-  
-=======
 typedef struct game
 {
         // Instance variables
@@ -45,22 +31,9 @@ typedef struct game
         spec_t *spectator;
         map_t *map;
         playerTable_t *players; // holds a player with the table
->>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 } game_t;
 ```
 
-<<<<<<< HEAD
-typedef struct player {
-  int row;                         // row
-  int col;                         // column 
-  addr_t IP;                       // IP address
-  char realName[MaxNameLength + 1];
-  char alias;                       // letter assigned
-  int gold;                        // gold in purse
-  int justCollected;
-  grid_t* seenGrid;
-} player_t;
-=======
 A data structure which holds the player, their address, and their letter 
 typedef struct playerNode
 ```c
@@ -79,7 +52,6 @@ typedef struct playerTable
 } playerTable_t;
 ```
 A data structure which holds the one spectator
->>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 
 ```c
 typedef struct spectator
@@ -103,10 +75,6 @@ typedef struct gold
   gold_pile_t* piles;
   int num_piles;
 } gold_t;
-<<<<<<< HEAD
-
-=======
->>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 ```
 ### Definition of function prototypes
 
@@ -216,37 +184,6 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 ```
 
 #### `handleMessage`:
-<<<<<<< HEAD
-
-	Parses message by message type
-	if message type is 'PLAY':
-		Checks whether max player has been reached:
-			if so, reply with 'QUIT' message;
-		Checks validity of name:
-			if name is valid:
-				call name_truncate with name and allowed length;
-				Decide letter for player;
-				Reply with 'OK Letter','GRID' and 'GOLD' message;
-				Stores processed name of player;
-			if name is invalid:
-				Responds with 'QUIT' message;
-	if message type is 'SPECTATE':
-		Reply with 'GRID' and 'GOLD' message'
-		continue to update this spectator with complete display in loop
-	if message type is 'QUIT':
-		calls server_removePlayer
-	if message type is 'KEY':
-		validate whether key is allowed
-		if key is allowed:
-			update player location in struct
-			update gold info if changed
-			update the master display(for server and spectator to see)
-			for all the player:
-				Determine their visibility(call visibility)
-				Reply with 'DISPLAY' message accordingly
-			for all spectators:
-				Reply with master 'DISPLAY' message
-=======
 
 	Check if the arg parameter (which is expected to be an addr_t pointer) is NULL. If it is NULL, return true.
 	Store the from parameter in the addr_t pointer otherp that was passed in as arg. This addr_t pointer is used to keep track of the current sender, so that future messages can be sent back to that sender.
@@ -424,7 +361,6 @@ bool moveable(mapNode_t *node)
 	If "c" is equal to any of these characters, return true.
 	If "c" is not equal to any of these characters, return false
 
->>>>>>> dda14660d2bcab649a9c3f9b4ecff62ea7be97a1
 
 A function that accepts a player and removes it by calling the remove player 
 
