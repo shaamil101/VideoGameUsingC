@@ -587,9 +587,10 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         else if (strncmp(message, "KEY Q", strlen("KEY Q")) == 0)
         {
                 log_v("A player is trying to quit.\n");
-                player_setLetterAssigned(searchByAddress(from),'.');
                 char *message_to_send = game_over_summary();
                 message_send(from, message_to_send);
+                if(!message_eqAddr(from,game->spectator->address))
+                {
                 maps_setMapNodeItem(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),'.');
                 maps_setMapNodeType(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),NULL);
                 for (int j = 0; j < game->numplayers; j++)
@@ -599,7 +600,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                           send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
                           send_player_display(game, player, player_getIP(game->players->arr[j]->player));
                   }
-
+                }
                 free(message_to_send);
 
                 return false;
