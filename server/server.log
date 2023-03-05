@@ -5,27 +5,125 @@ Creating new map from text map ../maps/small.txt...
 server_dropGold: got xRange in map to be 14
 server_dropGold: got yRange in map to be 5
 START OF LOG
-message_init: ready at port '38007'
-The port number is 38007
+message_init: ready at port '43016'
+The port number is 43016
 
-Annoucing the port! Ready at port '38007'
+Annoucing the port! Ready at port '43016'
 message_loop: message ready on socket
-message_loop: FROM 127.0.0.1:52505
+message_loop: FROM 127.0.0.1:43352
 message_loop: 1 lines:
-SPECTATE
-A spectator has been added!
-message_send: TO 127.0.0.1:52505
+PLAY hi
+the num players 0
+The index: 0
+
+Successfully added a player
+
+The character letter A
+
+message_send: TO 127.0.0.1:43352
 message_send: 1 lines:
-GRID 5 14
-message_send: TO 127.0.0.1:52505
+OK A
+message_send: TO 127.0.0.1:43352
+message_send: 1 lines:
+GRID 5 30
+message_send: TO 127.0.0.1:43352
 message_send: 1 lines:
 GOLD 0 0 250
-message_send: TO 127.0.0.1:52505
+
+message_send: TO 127.0.0.1:43352
 message_send: 6 lines:
 DISPLAY
   +----------+
   |...*.*....|
   |........*.|
-  |.......*..|
+  |@......*..|
   +----------+
 
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:43352
+message_loop: 1 lines:
+KEY L
+message_send: TO 127.0.0.1:43352
+message_send: 1 lines:
+GOLD 108 108 142
+
+message_send: TO 127.0.0.1:43352
+message_send: 6 lines:
+DISPLAY
+  +----------+
+  |...*.*....|
+  |........*.|
+  |.........@|
+  +----------+
+
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:43352
+message_loop: 1 lines:
+KEY k
+message_send: TO 127.0.0.1:43352
+message_send: 1 lines:
+GOLD 108 108 142
+
+message_send: TO 127.0.0.1:43352
+message_send: 6 lines:
+DISPLAY
+  +----------+
+  |...*.*....|
+  |........*@|
+  |..........|
+  +----------+
+
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:43352
+message_loop: 1 lines:
+KEY h
+message_send: TO 127.0.0.1:43352
+message_send: 1 lines:
+GOLD 41 149 101
+
+message_send: TO 127.0.0.1:43352
+message_send: 6 lines:
+DISPLAY
+  +----------+
+  |...*.*....|
+  |........@.|
+  |..........|
+  +----------+
+
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:43352
+message_loop: 1 lines:
+KEY k
+message_send: TO 127.0.0.1:43352
+message_send: 1 lines:
+GOLD 41 149 101
+
+message_send: TO 127.0.0.1:43352
+message_send: 6 lines:
+DISPLAY
+  +----------+
+  |...*.*..@.|
+  |..........|
+  |..........|
+  +----------+
+
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:43352
+message_loop: 1 lines:
+KEY H
+Got player letter to be: A
+QUIT Thanks for playing!
+Player Letter	Player Purse	Player Name
+-------------	------------	-----------
+      A      	250		hi
+
+message_send: TO 127.0.0.1:43352
+message_send: 4 lines:
+QUIT Thanks for playing!
+Player Letter	Player Purse	Player Name
+-------------	------------	-----------
+      A      	250		hi
+
+thanks for playing!
+message_done: message module closing down.
+END OF LOG

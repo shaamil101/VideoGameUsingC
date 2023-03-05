@@ -12,7 +12,7 @@
 ./server ../maps/small.txt word
 
 #Running a bot with the portnumber entered manually. First you must run ./server ../maps/small.txt 123
-PORTNUM1=38031
+PORTNUM1=43016
 #~/cs50-dev/shared/nuggets/linux/client plank $PORTNUM1 bot 2> /dev/null
 
 ../support/miniclient localhost $PORTNUM1 < StdinForServer.txt 
