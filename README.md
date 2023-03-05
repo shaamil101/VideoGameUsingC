@@ -29,6 +29,9 @@ player: module used by server that creates a player object to store a players lo
 ## Custom map
 We built our own map and put it in `maps/wall-street-djournal.txt`
 
+## Scrum
+We practiced the scrum model of project planning and execution throughout this final project. You can find our sprint backlog on our repo's project page, and our sprint retrospective summaries on our repo's wiki.
+
 ## Usage
 
 * To build the modules, run `make`.
