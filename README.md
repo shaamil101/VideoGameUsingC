@@ -52,3 +52,5 @@ Our main test is a systems test with the server, client, maps, and player all wo
   1. (client) larger than max character playername
   1. (client) join as spectator with a spectator already connected
   1. (client) join as player with max number of players already reached
+
+  The map will mostly be tested in the systems test, but there is a small mapstest file in the mapsandvis module that, when run, will load a map and display it in the terminal. This just tests that the map can be read and printed out correctly, but does not test server nor player module interaction (this is done in systems test).
