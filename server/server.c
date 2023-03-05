@@ -1183,15 +1183,18 @@ char *game_over_summary()
                 log_c("Got player letter to be: %c",player_letter);
 
                 int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]->player));
-                char *player_purse_char = (char *)calloc(10, sizeof(char));
+                char *player_purse_char = (char *)calloc(11, sizeof(char));
                 sprintf(player_purse_char, "%d", player_purse);
 
-                char *real_name = (char *)calloc(25, sizeof(char));
+                char *real_name = (char *)calloc(MaxNameLength+1, sizeof(char));
                 strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]->player));
 
                 // Add the portions of the table
+                //strcat(message_to_send, "      %-5c%-5d%-20s", player_letter)
+
+                char player_letter_string[2] = {player_letter,'\0'};
                 strcat(message_to_send, "      ");
-                strcat(message_to_send, &player_letter);
+                strcat(message_to_send, player_letter_string);
 
                 strcat(message_to_send, "      \t");
                 strcat(message_to_send, player_purse_char);

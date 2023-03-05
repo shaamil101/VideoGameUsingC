@@ -147,8 +147,6 @@ void startClient(client_t* client) {
 	mem_free(serverMessage);
 	// refresh the display
 	refresh();
-
-	log_v("Client started");
 }
 
 /**************** handleInputs() ****************/
