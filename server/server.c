@@ -536,10 +536,16 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
                 send_player_gold(game, newPlayer, from);
                 send_player_display(game, newPlayer, from);
+                if (game->spectator != NULL)
+                {
+                        // send the spectator a tabular summary
+                        send_spectator_gold(game, game->spectator->address);
+                        send_spectator_display(game, game->spectator->address);
+                }
                  for (int j = 0; j < game->numplayers; j++)
                 {
-                        // send all of the players a tabular summary
-                        player_t *player = game->players->arr[j]->player;
+                        // send all of the players
+                        player_t *player = game->players->arr[j]->player;  
                         send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
                         send_player_display(game, player, player_getIP(game->players->arr[j]->player));
                 }
