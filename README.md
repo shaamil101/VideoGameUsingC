@@ -38,3 +38,17 @@ server called with: `./server map.txt [seed]`
 
 ## Assumptions & Comments 
 There are no extra assumptions besides those laid out in the specs. See the specs for all details.
+
+## Tests
+
+Our main test is a systems test with the server, client, maps, and player all working together. We can test the server + player + maps with a bot client putting random inputs. The server and client will be tested by calling them in the command line with all possible arguments, including
+
+  1. no arguments
+  1. incorrect (too few and too many) arguments
+  1. (server) non-existing map file (in assignment details we are allowed to assume a map is valid if it is getting passed to server)
+  1. (server) w/ and w/o seed, and bad seed
+  1. (client) bad hostname
+  1. (client) bad port
+  1. (client) larger than max character playername
+  1. (client) join as spectator with a spectator already connected
+  1. (client) join as player with max number of players already reached
