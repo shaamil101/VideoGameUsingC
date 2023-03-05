@@ -26,6 +26,8 @@ mapsandvis: provides a data stucture for storing the map that the sever interact
 
 player: module used by server that creates a player object to store a players location, gold, seen map, letter, name, etc. The methods are called by server throughout
 
+## Custom map
+We built our own map and put it in `maps/wall-street-djournal.txt`
 
 ## Usage
 
