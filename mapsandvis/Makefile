@@ -14,7 +14,7 @@ LIBFLAGS = $(LIBS) -lm
 CC = gcc
 MAKE = make
 
-.PHONY: all maps.a mapstest clean
+.PHONY: all maps.a mapstest test clean
 
 all: maps.a mapstest
 
@@ -22,8 +22,10 @@ maps.a: maps.o
 	ar cr maps.a maps.o
 
 mapstest: mapstest.o maps.a
-# $(CC) $(CFLAGS) mapstest.c maps.a ../player/player.a ../support/support.a ../libcs50/libcs50-given.a -I../player -I../support -lm -o mapstest
-	$(CC) $(CFLAGS) $(LIBFLAGS) mapstest.c maps.a $(LIBFLAGS) -o mapstest
+	$(CC) $(CFLAGS) mapstest.c maps.a $(LIBFLAGS) -o mapstest
+
+test: mapstest
+	valgrind ./mapstest
 
 # Dependencies: object files depend on header files
 maps.o: maps.h

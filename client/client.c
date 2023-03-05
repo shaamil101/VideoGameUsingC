@@ -86,8 +86,7 @@ static client_t* parseArgs(const int argc, char* argv[]) {
 		exit(1);
 	}
 	// if port number can't be fetched log and return
-	int clientPort = message_init(NULL);
-	if (clientPort == 0) {
+	if (message_init(NULL) == 0) {
 		log_s("%s: Error: not able to fetch client port number\n", argv[0]);
 		exit(1);
 	}
@@ -124,18 +123,19 @@ void startClient(client_t* client) {
 	noecho();
 	start_color();
 	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	keypad(stdscr, false);
 	attron(COLOR_PAIR(1));
 
 	char* serverMessage;
 
-	// if the user is a spectator
+	// if the user is a spectator send a SPECTATE message to server
 	if (client->isSpectator) {
 		serverMessage = mem_assert(mem_malloc(strlen("SPECTATE") + 1), "allocating server message memory");
 
 		strcpy(serverMessage, "SPECTATE");
 		message_send(client->serverAddress, serverMessage);
 
-	// if the user is a player
+	// if the user is a player send a PLAY message to the server
 	} else {
 		serverMessage = mem_assert(mem_malloc(strlen("PLAY ") + strlen(client->playerName) + 1), "allocating server message memory");
 
@@ -145,8 +145,6 @@ void startClient(client_t* client) {
 
 	// free message memory
 	mem_free(serverMessage);
-	serverMessage = NULL;
-
 	// refresh the display
 	refresh();
 }
@@ -170,8 +168,9 @@ bool handleInputs(void* arg) {
 	
 	// build the keyMessage to be sent to the server
 	sprintf(keyMessage, "KEY %c", keyPressed); 
-	// if the client is not a spectator send it to the server
-	if (!client->isSpectator) {
+
+	// if the client is not a spectator or Q is pressed send it to the server
+	if (!client->isSpectator || keyPressed == 81) {
 		message_send(client->serverAddress, keyMessage);
 	}
 
@@ -234,13 +233,13 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
 */
 void handleQuit(const char* message) {
 	// end ncurses
+
 	nocbreak();
 	endwin();
 	// build status message
 	char* copy = mem_assert(mem_malloc(strlen(message)+1), "allocating for handle quit message copy");
 	strcpy(copy, message);
 	char* status = copy + strlen("QUIT ");
-
 	// log status message to stderr
 	log_s("%s\n", status);
 	// free the copy
@@ -300,11 +299,11 @@ void handleGrid(const char* message) {
 	// prompt the user to resize the screen and continue once they do
 	while(screenWidth < (gridWidth + 1) || screenHeight < (gridHeight + 1)) {
 		// print resize message as status
-		mvprintw(0, 0, "Your display window is too small. It must be at least %d pixels wide and %d pixels high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
+		mvprintw(0, 0, "Your display window is too small. It must be allow for least %d characters wide and %d characters high. Resize and press the enter key to continue playing", gridHeight + 1, gridWidth + 1); 
 		
-		char key = getch();
-
-		if (key == '\n') {
+		// if enter key is pressed get the new screen dimensions
+		char keyPressed = getch();
+		if (keyPressed == '\n') {
 			getmaxyx(stdscr, screenHeight, screenWidth);
 		}
 	}
@@ -326,40 +325,33 @@ void handleGrid(const char* message) {
  * Output: none
 */
 void handleDisplay(const char* message) {
-	// build the map message
-	char* messageCopy = mem_assert(mem_malloc(strlen(message)+1), "allocating message copy memory");
-	strcpy(messageCopy, message);
-	char* map = messageCopy + strlen("DISPLAY\n");
-	// make a copy of the map message
-	char* mapCopy = mem_assert(mem_malloc(strlen(message) - strlen("DISPLAY\n") + 1), "allocating map copy memory");
-	strcpy(mapCopy, map);
+	// extract the map message
+    const char* map = message + strlen("DISPLAY\n");
 
-	int begX, begY, currX, currY;
-	getbegyx(stdscr, begY, begX);
-	begY++;
-	move(begY,begX);
-	currX = begX;
-	currY = begY;
- 
-	for (int i = 0; i < strlen(mapCopy); i++) {
-		char c = mapCopy[i];
-		if (c == '\n') {
-			currY++;
-			currX = begX;
-			move(currY, currX);
-		} else {
-			addch(c);
-			currX++;
-			move(currY, currX);
-		}
-	}
-	// move to top left and re-draw
-	move(0,0);
-	refresh();
+    // get the current cursor position
+    int begY, begX, currY, currX;
+    getyx(stdscr, currY, currX);
+    getbegyx(stdscr, begY, begX);
+    begY = currY + 1;
 
-	// free copies
-	mem_free(messageCopy);
-	mem_free(mapCopy);
+    // print the map message
+    move(begY, 0);
+    for (int i = 0; i < strlen(map); i++) {
+        char c = map[i];
+        if (c == '\n') {
+            begY++;
+            currX = begX;
+            move(begY, currX);
+        } else {
+            addch(c);
+            currX++;
+        }
+    }
+	// re-draw
+    refresh();
+
+    // move to top left
+    move(0, 0);
 }
 
 
