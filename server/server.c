@@ -523,8 +523,17 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 free(map_message);
 
                 // send the player display
+               
+
                 send_player_gold(game, newPlayer, from);
                 send_player_display(game, newPlayer, from);
+                 for (int j = 0; j < game->numplayers; j++)
+                {
+                        // send all of the players a tabular summary
+                        player_t *player = game->players->arr[j]->player;
+                        send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
+                        send_player_display(game, player, player_getIP(game->players->arr[j]->player));
+                }
 
                 return false;
         }
@@ -569,8 +578,18 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         else if (strncmp(message, "KEY Q", strlen("KEY Q")) == 0)
         {
                 log_v("A player is trying to quit.\n");
+                player_setLetterAssigned(searchByAddress(from),'.');
                 char *message_to_send = game_over_summary();
                 message_send(from, message_to_send);
+                maps_setMapNodeItem(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),'.');
+                maps_setMapNodeType(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),NULL);
+                for (int j = 0; j < game->numplayers; j++)
+                  {
+                          // send all of the players a tabular summary
+                          player_t *player = game->players->arr[j]->player;
+                          send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
+                          send_player_display(game, player, player_getIP(game->players->arr[j]->player));
+                  }
 
                 free(message_to_send);
 
@@ -699,7 +718,8 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 
 /**************** send_player_display ****************/
 /*
-The function creates a new gold pile with the specified amount of gold.
+The function is to send a message containing information 
+about the display left in the game to a player.
 */
 void send_player_display(game_t *game, player_t *player, addr_t from)
 {
@@ -1096,6 +1116,9 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
     player_setYPosition(swapped_player, y);
     char_to_switch = maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)); //character at new place
     item_to_switch = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y)); //type at new place
+    player_addGold(player,player_getGold(swapped_player));
+    player_setJustCollected(player, player_getGold(swapped_player));
+    player_addGold((player_t *)(maps_getMapNodeType(maps_getMapNode(map, new_x,new_y))),player_getGold(swapped_player)*-1);
   }
   else
   {
