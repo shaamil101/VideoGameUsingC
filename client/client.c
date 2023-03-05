@@ -168,6 +168,7 @@ bool handleInputs(void* arg) {
 	
 	// build the keyMessage to be sent to the server
 	sprintf(keyMessage, "KEY %c", keyPressed); 
+
 	// if the client is not a spectator or Q is pressed send it to the server
 	if (!client->isSpectator || keyPressed == 81) {
 		message_send(client->serverAddress, keyMessage);
@@ -232,13 +233,13 @@ bool handleMessage(void* arg, const addr_t addr, const char* message) {
 */
 void handleQuit(const char* message) {
 	// end ncurses
+
 	nocbreak();
 	endwin();
 	// build status message
 	char* copy = mem_assert(mem_malloc(strlen(message)+1), "allocating for handle quit message copy");
 	strcpy(copy, message);
 	char* status = copy + strlen("QUIT ");
-
 	// log status message to stderr
 	log_s("%s\n", status);
 	// free the copy

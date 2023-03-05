@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <stdbool.h>
 #include <string.h>
 #include "message.h"
@@ -197,10 +196,13 @@ game_t *gamenode_new(int num_nuggets, map_t *curr_map)
 }
 
 game_t *game;
-
-/**
- * 
- * return 2 - null map
+/**************** main ****************/
+/*
+Main performs a series of checks and initializes the necessary components before starting the game. 
+It validates the number of arguments passed to the program, 
+initializes the logging file, and sets up the game environment based on the arguments provided. 
+Finally, it starts the server and waits for clients to connect. Once the game is complete,
+ it cleans up any resources used by the program and exits.
 */
 int main(int argc, char *argv[])
 {
@@ -319,6 +321,7 @@ int main(int argc, char *argv[])
 }
 
 /**************** server_dropGold ****************/
+/* A function called to drop random piles of gold in the map */
 void server_dropGold(map_t *map, int num_piles, int gold_amount)
 {
 
@@ -404,7 +407,12 @@ void server_dropGold(map_t *map, int num_piles, int gold_amount)
   }
 }
 
-/* WHen there is a message to parse from a client */
+/**************** handleMessage ****************/
+/*
+This function  is a utility function that allows a server to handle 
+incoming messages from clients and take appropriate actions based on the 
+contents of the message.
+*/
 bool handleMessage(void *arg, const addr_t from, const char *message)
 {
 
@@ -427,7 +435,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 // check and make sure there are not more than MaxPlayers users
                 if (game->numplayers >= MaxPlayers)
                 {
-                        fprintf(stderr, "Sorry, no more than MaxPlayers players can join! Please try again later.\n");
+                        fprintf(stderr, "Sorry, no more than MaxPlayers=%d players can join! Please try again later.\n", MaxPlayers);
+                        char *message_to_send = "QUIT Sorry, we've reached the max number of players in the server! Please try joining a different server.\n";
+                        message_send(from, message_to_send);
                         return false;
                 }
 
@@ -522,8 +532,23 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 free(map_message);
 
                 // send the player display
+               
+
                 send_player_gold(game, newPlayer, from);
                 send_player_display(game, newPlayer, from);
+                if (game->spectator != NULL)
+                {
+                        // send the spectator a tabular summary
+                        send_spectator_gold(game, game->spectator->address);
+                        send_spectator_display(game, game->spectator->address);
+                }
+                 for (int j = 0; j < game->numplayers; j++)
+                {
+                        // send all of the players
+                        player_t *player = game->players->arr[j]->player;  
+                        send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
+                        send_player_display(game, player, player_getIP(game->players->arr[j]->player));
+                }
 
                 return false;
         }
@@ -570,7 +595,18 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 log_v("A player is trying to quit.\n");
                 char *message_to_send = game_over_summary();
                 message_send(from, message_to_send);
-
+                if(!message_eqAddr(from,game->spectator->address))
+                {
+                maps_setMapNodeItem(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),'.');
+                maps_setMapNodeType(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),NULL);
+                for (int j = 0; j < game->numplayers; j++)
+                  {
+                          // send all of the players a tabular summary
+                          player_t *player = game->players->arr[j]->player;
+                          send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
+                          send_player_display(game, player, player_getIP(game->players->arr[j]->player));
+                  }
+                }
                 free(message_to_send);
 
                 return false;
@@ -696,7 +732,11 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
 }
 
 
-/* Send the player a display message  */
+/**************** send_player_display ****************/
+/*
+The function is to send a message containing information 
+about the display left in the game to a player.
+*/
 void send_player_display(game_t *game, player_t *player, addr_t from)
 {
         // create the grid string and determine the size
@@ -714,7 +754,11 @@ void send_player_display(game_t *game, player_t *player, addr_t from)
         free(DISPLAYMESSAGE);
 }
 
-/* Send the player a gold message  */
+/**************** send_player_gold ****************/
+/*
+The function is to send a message containing information 
+about the amount of gold left in the game to a player.
+*/
 void send_player_gold(game_t *game, player_t *player, addr_t from)
 {
         char *goldmessage = createGoldMessage(game->map, player);
@@ -722,7 +766,9 @@ void send_player_gold(game_t *game, player_t *player, addr_t from)
         free(goldmessage);
 }
 
-/* Send the spectator a display message  */
+/**************** send_spectator_display ****************/
+/* The function is to send a message containing information 
+about the display left in the game to a spectator. */
 void send_spectator_display(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
@@ -740,7 +786,9 @@ void send_spectator_display(game_t *game, addr_t from)
         free(DISPLAYMESSAGE);
 }
 
-/* Send the spectator a gold message  */
+/**************** send_spectator_gold ****************/
+/* The function is to send a message containing information 
+about the gold amount left in the game to a spectator. */
 void send_spectator_gold(game_t *game, addr_t from)
 {
         // create the grid string and determine the size
@@ -843,6 +891,8 @@ char getCharacterBasedOnIndex(int i)
     return toReturn;
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_left(map_t *map, player_t *player)
 {
   if (player_getXPosition(player) >= 1)
@@ -862,6 +912,8 @@ void move_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_right ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_right(map_t *map, player_t *player)
 {
   if (player_getXPosition(player) < maps_getCols(map))
@@ -881,6 +933,8 @@ void move_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_up ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_up(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
@@ -889,6 +943,8 @@ void move_up(map_t *map, player_t *player)
   }
 }
 
+/**************** move_up_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_up_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)-1)))
@@ -897,6 +953,8 @@ void move_up_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_down ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_down(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player),player_getYPosition(player)+1)))
@@ -904,6 +962,9 @@ void move_down(map_t *map, player_t *player)
     player_move(map, player, player_getXPosition(player), player_getYPosition(player) + 1);
   }
 }
+
+/**************** move_down_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 
 void move_down_MAX(map_t *map, player_t *player)
 {
@@ -913,6 +974,8 @@ void move_down_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_up_left(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
@@ -921,6 +984,8 @@ void move_diag_up_left(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_left_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_up_left_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) - 1)))
@@ -929,6 +994,8 @@ void move_diag_up_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_up_right(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
@@ -937,6 +1004,8 @@ void move_diag_up_right(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_up_right_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_up_right_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) - 1)))
@@ -945,6 +1014,8 @@ void move_diag_up_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_down_left(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
@@ -953,6 +1024,8 @@ void move_diag_down_left(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_down_left_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_down_left_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) - 1,player_getYPosition(player) + 1)))
@@ -961,6 +1034,8 @@ void move_diag_down_left_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** move_left ****************/
+/* Function to check if the location to move is moveable and calls player_move */
 void move_diag_down_right(map_t *map, player_t *player)
 {
   if (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
@@ -969,6 +1044,8 @@ void move_diag_down_right(map_t *map, player_t *player)
   }
 }
 
+/**************** move_diag_down_right_MAX ****************/
+/* Function to check if the location to move is moveable and calls player_move iteratively until it can */
 void move_diag_down_right_MAX(map_t *map, player_t *player)
 {
   while (moveable(maps_getMapNode(map,player_getXPosition(player) + 1,player_getYPosition(player) + 1)))
@@ -977,6 +1054,14 @@ void move_diag_down_right_MAX(map_t *map, player_t *player)
   }
 }
 
+/**************** moveable ****************/
+/*
+his function determines whether a given node on a map is moveable or not.
+It takes a pointer to a map node as input and returns a boolean value indicating
+whether it is safe to move onto the node or not. 
+The function checks if the node is not null and if it contains a valid character ('.', '*', '@', or '#') 
+which denotes empty space, a box, the player, or a target respectively.
+*/
 bool moveable(mapNode_t *node)
 {
   mapNode_t *this_node = node;
@@ -1006,6 +1091,15 @@ void server_dropPlayer(map_t *map, player_t *player)
 
 
 /********************* player_move ********************/
+/*
+This function  is responsible for moving the player within the game map. 
+It takes the current map, player object, and the new x and y coordinates to move the player to.
+The function checks for the type of the item present in the new position and performs different actions based on it.
+If it's a gold pile, it subtracts the gold from the map and adds it to the player's inventory.
+If it's a hallway, it simply switches the character with an empty space. 
+If it's another player, it swaps the positions of the two players.
+Finally, the function updates the game map with the new positions of the players and the items
+*/
 void player_move(map_t *map, player_t *player, int new_x, int new_y)
 {
   int x = player_getXPosition(player);
@@ -1038,6 +1132,9 @@ void player_move(map_t *map, player_t *player, int new_x, int new_y)
     player_setYPosition(swapped_player, y);
     char_to_switch = maps_getMapNodeItem(maps_getMapNode(map, new_x,new_y)); //character at new place
     item_to_switch = maps_getMapNodeType(maps_getMapNode(map, new_x,new_y)); //type at new place
+    player_addGold(player,player_getGold(swapped_player));
+    player_setJustCollected(player, player_getGold(swapped_player));
+    player_addGold((player_t *)(maps_getMapNodeType(maps_getMapNode(map, new_x,new_y))),player_getGold(swapped_player)*-1);
   }
   else
   {
@@ -1093,15 +1190,18 @@ char *game_over_summary()
                 log_c("Got player letter to be: %c",player_letter);
 
                 int player_purse = (player_getGold(game->players->arr[temp_num_players - 1]->player));
-                char *player_purse_char = (char *)calloc(10, sizeof(char));
+                char *player_purse_char = (char *)calloc(11, sizeof(char));
                 sprintf(player_purse_char, "%d", player_purse);
 
-                char *real_name = (char *)calloc(25, sizeof(char));
+                char *real_name = (char *)calloc(MaxNameLength+1, sizeof(char));
                 strcpy(real_name, player_getRealName(game->players->arr[temp_num_players - 1]->player));
 
                 // Add the portions of the table
+                //strcat(message_to_send, "      %-5c%-5d%-20s", player_letter)
+
+                char player_letter_string[2] = {player_letter,'\0'};
                 strcat(message_to_send, "      ");
-                strcat(message_to_send, &player_letter);
+                strcat(message_to_send, player_letter_string);
 
                 strcat(message_to_send, "      \t");
                 strcat(message_to_send, player_purse_char);

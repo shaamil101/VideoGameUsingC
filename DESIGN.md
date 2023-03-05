@@ -243,13 +243,13 @@ We'll test our server program's various aspects, including:
 ## Maps & Visibility
 Maps will be a separate module that the server will access for its map data structure and methods.
 
-The map structure will store the map as read from the map.txt file (there will be a method to load a map.txt file into a map), but it will not store the player or gold data (the server needs to do that). Instead, it will provide methods that take in the map struct pointer, a list of players, and a list of gold, and will return the ascii representation of the map with players and gold on it.
+The map structure will store the map as read from the map.txt file (there will be a method to load a map.txt file into a map), as a 2d array of mapNodes. It will provide methods that take in the map struct pointer and a player and return the ascii map representation.
 
-We'll design a number of methods to allow loading and setting the map, printing out the blank map, the map with players overlaid, and the map with gold overlaid, and the map with only some sections visible (for players not being able to see the whole map)
+We'll design a number of methods to allow loading and setting the map, printing out the spectator map and printing out specific client maps
 
 Visibility will work within the maps module. Given a player's position, we want to know if a certain gridpoint is visible. We'll use the method described in the requirements spec, where we look through the rows and columns between the player position (pr, pc) and the gridpoint we're trying to look at (r,c). If the line between these two points is ever between two NOT empty room spots, then the point will not be visible.
 
-The server should store what gridpoints have been viewed by the player, and the maps module should have an isVisible() method that, for player position and gridpoint position, will return a bool value for if its visible. We can then iterate through the map and display only what's visible on the grid, and what has been previously seen.
+The player module should store what gridpoints have been viewed by the player, and the maps module should have an isVisible() method that, for player position and gridpoint position, will return a bool value for if its visible. We can then iterate through the map and display only what's visible on the grid, and what has been previously seen.
 
 
 ### Functional decomposition
@@ -276,14 +276,14 @@ The server should store what gridpoints have been viewed by the player, and the 
 		open and validate the given maps.txt file
 		go through text file and get dimensions of map
 		initialize grid struct
-		declare arrays of integers for grid struct
-		go through text file and load characters into the grid struct
+		declare arrays of mapNodes for grid struct
+		go through text file and load characters into the mapNode
 
 #### maps_basegrid
 
 		go through grid struct and return each character row separated by new lines
 
-#### maps_fullgrid
+#### maps_spectatorgrid
 
 	go through each grid struct with an empty string
 		if the (x,y) is a player, add the player letter (A-Z) instead of room space to the string
@@ -293,53 +293,85 @@ The server should store what gridpoints have been viewed by the player, and the 
 #### maps_playergrid
 
 	go through each grid struct with an empty string
-		if the (x,y) is 
-		if the (x,y) is a player, add the player letter (A-Z) instead of room space to the string
-		if the (x,y) is gold, add * instead of room space to the string
-		otherwise spit out the char in the grid, rows separated by new line
+		if the (x,y) has been seen by the player
+			if the (x,y) is currently visible to the player
+				if the (x,y) is a player, add the player letter (A-Z) instead of room space to the string
+				if the (x,y) is gold, add * instead of room space to the string
+				otherwise spit out the char in the grid, rows separated by new line
+			if not currently visible
+				print out normal char in grid
+		if not seen by player
+			print out space into string
+
+#### maps_isVisible
+
+	make a line between player point and test point
+	get where line intersects different points
+	start from player point and increment towards test point
+		if line interescts exactly on a point
+			if point is not transparent
+				return false
+		wherever line intersects pair of columns (or pair of rows, depending on line slope)
+			if both points are not transparent
+				return false
+	return true if it makes it to test point without returning false
 
 #### maps_getRows
 
-	return number of rows of grid
+	Takes in a map pointer and returns the num of rows stored
 
 #### maps_getCols
 
-	return number of columns of grid
+	Takes in a map pointer and returns the num of cols stored
 
-#### maps_getGridpoint
+#### maps_getXrange
 
-	return char at a given row and column of the grid
+	Takes in a map pointer and returns the max x value (exclusive) in the grid (which is number of columns)
 
-#### maps_getVisiblePoints
+#### maps_getYrange
 
-	go through each gridpoint in the grid (knowing the player position we're trying to look from)
-		think of line between player position and test position
-		if gridpoint is visible from player pos (if line is not between two empty room spots for each pair of gridpoints between the line through each row/column (or gridpoint if line lies directly on one))
-			add to list of visible points
-	return list of visible points
+	Takes in a map pointer and returns the max y value (exclusive) in the grid (which is number of rows)
 
-#### maps_getRandomGridpoint
+#### maps_getMapNode
 
-	get positions of all empty room gridpoints
-	pick a random one from that list
-	return that one
+	Takes in a map pointer and x and y position and gets the map node at that x and y (converts from x and y to rows and columns)
+
+#### maps_getMapNodeItem
+
+	Takes in a map node pointer and returns the char item for that map node
+
+#### maps_getMapNodeType
+
+	Takes in a map node pointer and returns the void* type for that map node
+
+#### maps_setMapNodeItem
+
+	Takes in a map node pointer and char item and sets the char item for that map node
+
+#### maps_setMapNodeType
+
+	Takes in a map node pointer and void* type and sets the void* type for that map node
+
+#### maps_setTotalGoldLeft
+
+	Takes in a map pointer and integer totalgold left and sets the integer totalgoldleft for the map struct
+
+#### maps_getTotalGoldLeft
+
+	Take in a map pointer and return integer value for totalGoldLeft in map struct
+
+#### maps_ishallwayNode
+
+	Returns the bool for whether or not a node is a hallway, stored in node struct
 
 #### maps_delete
 
-	delete the maps structure
- 
-#### maps_newMatrixIndex
-
-	validate row and column arguments are non-negative
-	create a new matrix index structure with a given row and column
- 
-#### maps_deleteMatrixIndex
-
-	delete the matrix index structure
+	Frees all the memory wrapped inside a map module, which is really just the 2d array and then the struct itself.
 
 ### Major data structures
+There will be a mapNode_t data structure that stores, in place of a gridpoint, a character for map representation, the type (player or gold or null) at that point, and booleans for transparency and if it's a hallway.
 
-There will be a main data structure in the maps/visibility module will be the grid_t struct. This structure should hold the array of arrays of chars for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
+There will be a main map_t data structure in the maps/visibility module. This structure should hold the array of arrays of mapNode_t's for each gridpoint in the map. We'll reserve the chars as listed in the requirements spec.
    * ` ` solid rock - interstitial space outside rooms
    * `-` a horizontal boundary
    * `|` a vertical boundary
@@ -347,10 +379,7 @@ There will be a main data structure in the maps/visibility module will be the gr
    * `.` an empty room spot
    * `#` an empty passage spot
 
-The grid_t* structure will also hold the integer number of rows and the number of columns for easy iteration boundaries.
-
-There will also be a matrixIndex structure that wraps a row and column integer index together for easy representation of a 2d point in the grid matrix.
-
+The map_t structure will also hold the integer number of rows and the number of columns for easy iteration boundaries, and the amount of gold left
 ---
 
 ## Player Module (data structure, different than client)
@@ -362,17 +391,21 @@ The main data structure in the player module will be the player_t struct. This s
 ### Functional decomposition
 
 1. *player_new*
-2. *player_getGold*
-3. *player_setGold*
-4. *player_getVisibilityMap*
-5. *player_setVisibilityMap*
-6. *player_getXPosition*
-7. *player_setXPosition*
-8. *player_getYPosition*
-9. *player_setYPosition*
-10. *player_setPosition*
-11. *player_getRealName*
-12. *player_delete*
+2. *player_delete*
+3. *player_getGold*
+4. *player_setGold*
+5. *player_getJustCollected*
+6. *player_setJustCollected*
+7. *player_getSeenMap*
+8. *player_setSeenMap*
+9. *player_getXPosition*
+10. *player_setXPosition*
+11. *player_getYPosition*
+12. *player_setYPosition*
+13. *player_getRealName*
+14. *player_getLetterAssigned*
+15. *player_setLetterAssigned*
+16. *player_getIP*
 
 ### Pseudo code for logic/algorithmic flow
 
@@ -390,15 +423,23 @@ Functions in the player module will be called by actions in the server module. E
 #### player_getGold
     
 > Returns an integer representing the players current gold
-    
+
 #### player_addGold
 
 > Updates the integer representing the players current gold
 
+#### player_getJustCollected
+
+> returns the players just collected value 
+
+#### player_setJustCollected
+
+> returns the players just collected value
+
 #### player_getSeenMap
 
 > Returns an array of arrays with each element in the outer array representing a row in the map and each inner array representing a collumn in that array 
-> The values stored in each inner array will either be 0 (if that coordinate in that map has not been seen) and 1 (if that coordinate in that map has been seen)
+> The values stored in each inner array will either be false (if that coordinate in that map has not been seen) and true (if that coordinate in that map has been seen)
 
 #### player_addSeenMap
 
@@ -424,6 +465,14 @@ Functions in the player module will be called by actions in the server module. E
 
 > Returns the players real name (truncated version less than max length) given at the start of the game)
 
+### player_getLetterAssigned
+
+> Returns the players letter assigned (char)
+
+### player_setLetterAssigned
+
+> Sets the players letter assigned to the value given
+
 #### player_getIP
 
 > Returns the players IP address
@@ -431,5 +480,5 @@ Functions in the player module will be called by actions in the server module. E
 
 ### Major data structures
 
-The player structure will store the (integer) amount of gold a player has, the position of the player, an array of arrays of the size of the map that masks where the player has been visible.
+The player structure will store the players gold, name, seen map, x and y, just collected, letter assigned that are accessed by the server. 
 
