@@ -1,0 +1,31 @@
+START OF LOG
+START OF LOG
+initialize map logging
+Creating new map from text map ../maps/small.txt...
+server_dropGold: got xRange in map to be 14
+server_dropGold: got yRange in map to be 5
+START OF LOG
+message_init: ready at port '38007'
+The port number is 38007
+
+Annoucing the port! Ready at port '38007'
+message_loop: message ready on socket
+message_loop: FROM 127.0.0.1:52505
+message_loop: 1 lines:
+SPECTATE
+A spectator has been added!
+message_send: TO 127.0.0.1:52505
+message_send: 1 lines:
+GRID 5 14
+message_send: TO 127.0.0.1:52505
+message_send: 1 lines:
+GOLD 0 0 250
+message_send: TO 127.0.0.1:52505
+message_send: 6 lines:
+DISPLAY
+  +----------+
+  |...*.*....|
+  |........*.|
+  |.......*..|
+  +----------+
+

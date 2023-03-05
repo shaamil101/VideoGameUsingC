@@ -99,11 +99,12 @@ There will be a client data structure that holds important information such as s
 We'll test various aspects of our client, including
 
 1. arguments - ensure arguments are good to start client correctly
-1. connection to server - handing bad addresses, bad ports, disconnection
-1. window sizing - what happens when window is sized incorrectly or user never resizes
-1. input handling - handling any button presses at any time
-1. bad server messages - what happens when we receive bad data from the server
-1. memory leaks - check for memory leaks while the program is running (exception being from ncurses library)
+2. connection to server - handing bad addresses, bad ports, disconnection
+3. window sizing - what happens when window is sized incorrectly or user never resizes
+4. input handling - handling any button presses at any time
+5. bad server messages - what happens when we receive bad data from the server
+6. memory leaks - check for memory leaks while the program is running (exception being from ncurses library)
+7. Using miniclient and seeded game - We write a bash script that tests the program with a bot and also a seeded game "123" with pre-determined steps and the output can be found through server logging
 
 ---
 

@@ -15,7 +15,7 @@ LIBFLAGS = -lm
 CC = gcc
 MAKE = make
 
-.PHONY: all server clean
+.PHONY: all server clean servertest
 
 all:
 	make -C ../player
@@ -28,6 +28,10 @@ server: server.o
 # Dependencies: object files depend on c files
 server.o: server.c
 	$(CC) $(CFLAGS) server.c $(LIBFLAGS) -c -o server.o
+
+servertest: 
+	chmod +x servertest.sh
+	bash -v servertest.sh
 
 # clean up after our compilation
 clean:

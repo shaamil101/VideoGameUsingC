@@ -534,8 +534,8 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 // send the player display
                
 
-                send_player_gold(game, newPlayer, from);
-                send_player_display(game, newPlayer, from);
+                //send_player_gold(game, newPlayer, from);
+                //send_player_display(game, newPlayer, from);
                 if (game->spectator != NULL)
                 {
                         // send the spectator a tabular summary

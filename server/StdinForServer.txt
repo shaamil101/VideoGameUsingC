@@ -1,0 +1,6 @@
+PLAY hi
+KEY L
+KEY k
+KEY h
+KEY k
+KEY H

@@ -1154,6 +1154,7 @@ We can write a unit test for the maps module that will test load a few maps and 
 
 The player module works so closely with the server that player module testing will happen in server program testing.
 
+The server module runs with a bot as well as a seeded game with pre-determined steps. It can be found in the servertest.sh file
 
 ### integration testing
 
