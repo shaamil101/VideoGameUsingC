@@ -712,7 +712,7 @@ void maps_delete(map_t* map)
     for (int r = 0; r < map->numRows; r++) { // go through each row
       for (int c = 0; c < map->numCols; c++) { // go through each col
         if ((node=map->grid[r][c]) != NULL) { // make sure the mapNode isn't null before trying to free it
-          free(node); // free the mapNode
+          mapNodeDelete(node); // free the mapNode
         }
       }
       if (map->grid[r] != NULL) { // make sure the row isn't null before trying to free it
