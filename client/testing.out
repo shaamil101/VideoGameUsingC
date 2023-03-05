@@ -1,0 +1,25 @@
+no arguments:
+START OF LOG
+./client: Usage: ./client hostName port [playerName]
+
+
+one argument:
+START OF LOG
+./client: Error: failed to set server address
+
+
+four arguments:
+START OF LOG
+./client: Usage: ./client hostName port [playerName]
+
+
+invalid server address:
+START OF LOG
+./client: Error: failed to set server address
+
+
+invalid port
+START OF LOG
+./client: Error: failed to set server address
+
+

@@ -11,4 +11,7 @@ We follow our implementation spec closely while writing the maps module, please 
 There are no known deviations from spec.
 
 ## Maps test
-Run the maps test with `./mapstest` and see that we can load a file and print it out. You can see visibility working in integration with the server.
+Run the maps test with `make test` (in the maps directory) and see that we can load a file and print it out, along with the map as visible from a certain point. This is also run with valgrind so you can see no memory leaks when loading and deleting the map. I ran `valgrind ./mapstest &> testing.out` to see what the make test outputs (in file testing.out).
+
+## Custom map
+We created our own custom map (as required in the assignment details) and stored it under `maps/wall-street-djournal.txt`. 

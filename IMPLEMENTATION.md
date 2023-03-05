@@ -1150,7 +1150,7 @@ Returns the players IP address
 
 ### unit testing
 
-We can write a unit test for the maps module that will test load a few maps and test visibility methods, but the integration with the server will be tested while using the server.
+We can write a unit test for the maps module that will test load a map and test visibility and memory management methods, but the integration with the server will be tested while using the server.
 
 The player module works so closely with the server that player module testing will happen in server program testing.
 
@@ -1158,7 +1158,7 @@ The server module runs with a bot as well as a seeded game with pre-determined s
 
 ### integration testing
 
-The server will be tested by having a dummy client send pre-determined messages testing all messages (including invalid ones and edge cases, and testing all player movement behavior, including normal behavior and erratic behavior.
+The server will be tested by having a dummy client send pre-determined messages testing all messages (including invalid ones and edge cases, and testing all player movement behavior, including normal behavior and erratic behavior).
 
 The client will be tested by having a dummy server sending pre-determined messages to the client, testing all communcations (including invalid ones), and sending different map strings and other server messages, including edge cases for messages.
 
@@ -1169,6 +1169,4 @@ The server and client will be tested by using set seeds to allow for determined 
 ---
 
 ## Limitations
-
--
--
+There are no known limitations or deviations from spec for our modules and programs, other than those outlined in the assignment details and requirements spec (such as a max of 26 players (through entire duration of server running) and 1 spectator (at a time) per server)
