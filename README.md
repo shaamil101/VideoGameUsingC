@@ -47,10 +47,11 @@ Our main test is a systems test with the server, client, maps, and player all wo
   1. incorrect (too few and too many) arguments
   1. (server) non-existing map file (in assignment details we are allowed to assume a map is valid if it is getting passed to server)
   1. (server) w/ and w/o seed, and bad seed
+
+Testing the client in one testing script is difficult because a server first needs to be running, so we will test our client by calling the following *while a server is running*. 
+
   1. (client) bad hostname
   1. (client) bad port
-  1. (client) larger than max character playername
-  1. (client) join as spectator with a spectator already connected
-  1. (client) join as player with max number of players already reached
+  1. (client) bad playername (including larger than max characters)
 
   The map will mostly be tested in the systems test, but there is a small mapstest file in the mapsandvis module that, when run, will load a map and display it in the terminal. This just tests that the map can be read and printed out correctly, but does not test server nor player module interaction (this is done in systems test).
