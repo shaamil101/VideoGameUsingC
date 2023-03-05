@@ -17,9 +17,6 @@ client: client.o $(LLIBS)
 
 client.o: client.c ../support/message.h ../support/log.h ../libcs50/mem.h
 
-../support/support.a:
-	make -C ../support support.a
-
 clean:
-	make -C ../support clean
-	rm -f *~ *.o core
+	rm -f client
+	rm -f core *~ *.o
