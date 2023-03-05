@@ -40,3 +40,4 @@ client/client
 vgcore.*
 mapsandvis/mapstest
 server/server
+.vscode/settings.json
