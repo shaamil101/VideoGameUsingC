@@ -1,5 +1,5 @@
 # CS 50: Nuggets Game
-## Authors: Wyatt Ellison, Shaamil Karim Shaw Alem, Jake Lotreck, Jack Desmond
+## Authors: Wall Street Djournal (Wyatt Ellison, Shaamil Karim Shaw Alem, Jake Lotreck, Jack Desmond)
 ## GitHub usernames: wyattellison, shaamil101, JLotreck, jcdeesmond23
 
 This repository contains the code for the CS50 "Nuggets" game, in which players explore a set of rooms and passageways in search of gold nuggets.
