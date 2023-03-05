@@ -958,12 +958,11 @@ typedef struct player{
     int x;                        
     int y;                    
     bool** seenMap;
- 	addr_t IP;                     
+ 		addr_t IP;                     
     char realName[MaxNameLength];
     char letterAsisgned;                      
     int gold;                      
     int justCollected;
-	player_t; 
 } player_t; 
 ```
 
