@@ -1156,14 +1156,7 @@ The player module works so closely with the server that player module testing wi
 
 The server module runs with a bot as well as a seeded game with pre-determined steps. It can be found in the servertest.sh file
 
-### integration testing
-
-The server will be tested by having a dummy client send pre-determined messages testing all messages (including invalid ones and edge cases, and testing all player movement behavior, including normal behavior and erratic behavior).
-
-The client will be tested by having a dummy server sending pre-determined messages to the client, testing all communcations (including invalid ones), and sending different map strings and other server messages, including edge cases for messages.
-
-### system testing
-
+### integration and system testing
 The server and client will be tested by using set seeds to allow for determined gold positioning and amounts. We can run with given client bots to test any behavior, and run the server on plank and client on our own machines to test client-server connections.
 
 ---
