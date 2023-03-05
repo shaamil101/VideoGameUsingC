@@ -606,7 +606,7 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                           send_player_gold(game, player, player_getIP(game->players->arr[j]->player));
                           send_player_display(game, player, player_getIP(game->players->arr[j]->player));
                   }
-                  if (game->spectator != NULL)
+                if (game->spectator != NULL)
                 {
                         // send the spectator a tabular summary
                         send_spectator_gold(game, game->spectator->address);
