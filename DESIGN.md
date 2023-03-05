@@ -380,6 +380,10 @@ There will be a main map_t data structure in the maps/visibility module. This st
    * `#` an empty passage spot
 
 The map_t structure will also hold the integer number of rows and the number of columns for easy iteration boundaries, and the amount of gold left
+
+### Maps & Visibility Testing Plan
+We'll test the mapsandvis module independtly with a small `mapstest` script (written in C) that will just try to load a map, display the base grid string and the the grid as visible from a single point, and free the map from memory. Anything having to do with displaying players and gold will be tested in the systems and integration test with the server (including trying to load a map that doesn't exist, which results in a NULL map_t pointer being returned to the server, which handles it by throwing an error and exiting non-zero).
+
 ---
 
 ## Player Module (data structure, different than client)
@@ -482,3 +486,6 @@ Functions in the player module will be called by actions in the server module. E
 
 The player structure will store the players gold, name, seen map, x and y, just collected, letter assigned that are accessed by the server. 
 
+### Player testing plan
+
+Becuase the player module really just stores info for the server to use, we won't include a unit test but will instead wrap the player testing into the server testing, including testing the server for memory leaks caused by the player module. The player module is exclusively used by the server, so any bad use-cases will be done by the server, which we can test by running the server.
