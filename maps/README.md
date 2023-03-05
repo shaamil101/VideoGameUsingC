@@ -1,8 +1,8 @@
 # Maps
 
 This directory contains maps for the Nuggets game.
-Feel free to add your own.
 
+* `wall-street-djournal.txt`: our own map that we made!
 * `big.txt`: a very large map
 * `challenge.txt`: a very tricky map
 * `edges.txt`: a small map that bumps into the edges of the grid
