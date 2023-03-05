@@ -86,8 +86,7 @@ static client_t* parseArgs(const int argc, char* argv[]) {
 		exit(1);
 	}
 	// if port number can't be fetched log and return
-	int clientPort = message_init(NULL);
-	if (clientPort == 0) {
+	if (message_init(NULL) == 0) {
 		log_s("%s: Error: not able to fetch client port number\n", argv[0]);
 		exit(1);
 	}
