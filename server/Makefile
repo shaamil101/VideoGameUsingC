@@ -18,8 +18,6 @@ MAKE = make
 .PHONY: all server clean
 
 all:
-	make -C ../player
-	make -C ../mapsandvis
 	make server
 
 server: server.o
@@ -31,8 +29,6 @@ server.o: server.c
 
 # clean up after our compilation
 clean:
-	rm -f ../player/player.a
-	rm -f ../mapsandvis/maps.a
 	rm -f server
 	rm -f core
 	rm -f *~ *.o
