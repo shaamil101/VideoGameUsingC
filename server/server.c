@@ -592,10 +592,10 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
         // handle the quit message!
         else if (strncmp(message, "KEY Q", strlen("KEY Q")) == 0)
         {
-                log_v("A player is trying to quit.\n");
+                log_v("A player is trying to quit.");
                 char *message_to_send = game_over_summary();
                 message_send(from, message_to_send);
-                if(!message_eqAddr(from,game->spectator->address))
+                if(game->spectator!= NULL && !message_eqAddr(from,game->spectator->address))
                 {
                 maps_setMapNodeItem(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),'.');
                 maps_setMapNodeType(maps_getMapNode(game->map, player_getXPosition(searchByAddress(from)),player_getYPosition(searchByAddress(from))),NULL);
