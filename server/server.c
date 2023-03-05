@@ -436,7 +436,9 @@ bool handleMessage(void *arg, const addr_t from, const char *message)
                 // check and make sure there are not more than MaxPlayers users
                 if (game->numplayers >= MaxPlayers)
                 {
-                        fprintf(stderr, "Sorry, no more than MaxPlayers players can join! Please try again later.\n");
+                        fprintf(stderr, "Sorry, no more than MaxPlayers=%d players can join! Please try again later.\n", MaxPlayers);
+                        char *message_to_send = "QUIT Sorry, we've reached the max number of players in the server! Please try joining a different server.\n";
+                        message_send(from, message_to_send);
                         return false;
                 }
 
