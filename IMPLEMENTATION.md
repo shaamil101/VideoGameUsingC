@@ -945,20 +945,25 @@ Returns the bool for whether or not a node is a hallway, stored in node struct
 
 ## Player
 
+ The player module provides a player data structure to store and update the values of the player. It is called by the server module throughout game play. 
+ 
 ### Data structures
 
-The player data stucture to hold the player name, player gold, player visibility map, player x and y position.
+The player data stucture holds the player name, seenMap, player gold, player justCollected (last amount of gold picked up), player IP address, player x and y position.
+
+seenMap is a 2d array representing the grid points, and it stores booleans representing if the player has seen that point (true) or if they have not (false)
 
 ```c
 typedef struct player{
     int x;                        
     int y;                    
-    grid_t* seenGrid;
+    bool** seenMap;
  	addr_t IP;                     
     char realName[MaxNameLength];
     char letterAsisgned;                      
     int gold;                      
-    int justCollected;player_t; 
+    int justCollected;
+	player_t; 
 } player_t; 
 ```
 
@@ -967,15 +972,15 @@ typedef struct player{
 ```c
 player_t* player_new(const char* playerName, addr_t ipAddress, int maxCharacters, int totalRows, int totalCollumns, char letterAssigned);
 void player_delete(player_t* player);
-void player_addGold(player_t* player, int* gold);
+void player_addGold(player_t* player, int gold);
 int player_getGold(player_t* player);
 int player_getJustCollected(player_t* player);
 void player_setJustCollected(player_t* player, int justCollected);
-void player_addSeenMap(player_t* player, int* row, int* collumn);
+void player_addSeenMap(player_t* player, int row, int collumn);
 bool** player_getSeenMap(player_t* player);
-void player_setXPosition(player_t* player, int* xPos);
+void player_setXPosition(player_t* player, int xPos);
 int player_getXPosition(player_t* player);
-void player_setYPosition(player_t* player, int* yPos);
+void player_setYPosition(player_t* player, int yPos);
 int player_getYPosition(player_t* player);
 char* player_getRealName(player_t* player);
 char player_getLetterAssigned(player_t* player);
