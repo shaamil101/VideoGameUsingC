@@ -1,0 +1,13 @@
+one arguments:
+START OF LOG
+./client: Error: failed to set server address
+
+
+four arguments:
+START OF LOG
+./client: Usage: ./client hostName port [playerName]
+
+
+ivalid server address:
+START OF LOG
+./client: Error: failed to set server address
