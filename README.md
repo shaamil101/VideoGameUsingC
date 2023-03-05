@@ -48,10 +48,7 @@ Our main test is a systems test with the server, client, maps, and player all wo
   1. (server) non-existing map file (in assignment details we are allowed to assume a map is valid if it is getting passed to server)
   1. (server) w/ and w/o seed, and bad seed
 
-Testing the client in one testing script is difficult because a server first needs to be running, so we will test our client by calling the following *while a server is running*. 
+The map will mostly be tested in the systems test, but there is a small mapstest file in the mapsandvis module that, when run, will load a map and display it in the terminal. This just tests that the map can be read and printed out correctly, but does not test server nor player module interaction (this is done in systems test).
 
-  1. (client) bad hostname
-  1. (client) bad port
-  1. (client) bad playername (including larger than max characters)
-
-  The map will mostly be tested in the systems test, but there is a small mapstest file in the mapsandvis module that, when run, will load a map and display it in the terminal. This just tests that the map can be read and printed out correctly, but does not test server nor player module interaction (this is done in systems test).
+To perform the whole system test, we ran the server in one terminal window and ran the client in other terminal windows, played the game with varying behaviors and checked for crashes, memory leaks, or odd behavior from server and client. All of this use-case systems testing passed.
+You can try testing by playing the game as well, from the main directory, run the server with `server/server maps/wall-street-djournal.txt 123` and in a separate terminal, run `client/client [localhost/other host] [port] [name, or nothing if testing spectator]`
